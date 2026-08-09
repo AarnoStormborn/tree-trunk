@@ -156,3 +156,13 @@ func wtErrorText(err error) string {
 		return msg
 	}
 }
+
+// copyText copies text to the clipboard (print-only fallback, review m8).
+func copyText(text string) tea.Cmd {
+	return func() tea.Msg {
+		if err := clipboard.WriteAll(text); err != nil {
+			fmt.Println(text)
+		}
+		return worktreeActionMsg{op: "open", err: nil}
+	}
+}

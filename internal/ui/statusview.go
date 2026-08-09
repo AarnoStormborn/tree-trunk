@@ -9,10 +9,40 @@ import (
 )
 
 // statusView renders the selected repo's Status (docs/design/04-tui-layout.md
-// §5.1). It is a pure projection of the model — no git calls here.
+// §5.1). It is a pure projection of the model — no git calls here. File rows
+// are selectable (j/k) so `enter` can open a scoped diff (review M9).
 type statusView struct {
-	repo          *model.Repo
-	width, height int
+	repo     *model.Repo
+	width    int
+	height   int
+	files    []model.StatusFile // flattened, section-ordered rows
+	cursor   int
+	hasFocus bool
+}
+
+// rebuildFiles flattens the file rows in section order (conflicts, staged,
+// unstaged, untracked) for cursor navigation.
+func (v *statusView) rebuildFiles() {
+	if v.repo == nil {
+		v.files = nil
+		return
+	}
+	st := &v.repo.Status
+	v.files = v.files[:0]
+	appendFiles := func(filter fileFilter) {
+		for _, f := range st.Files {
+			if filter(f) {
+				v.files = append(v.files, f)
+			}
+		}
+	}
+	appendFiles(conflictFilter)
+	appendFiles(stagedFilter)
+	appendFiles(unstagedFilter)
+	appendFiles(untrackedFilter)
+	if v.cursor >= len(v.files) {
+		v.cursor = 0
+	}
 }
 
 // render produces the pane body for the current repo ("" when none).
@@ -48,16 +78,16 @@ func (v statusView) render() string {
 	b.WriteString("\n\n")
 
 	if st.Conflicts > 0 {
-		writeSection(&b, "Unmerged paths (conflicts)", st, conflictFilter, conflictStyle)
+		writeSection(&b, "Unmerged paths (conflicts)", st, conflictFilter, conflictStyle, v)
 	}
 	if st.Staged > 0 {
-		writeSection(&b, "Changes to be committed", st, stagedFilter, stagedStyle)
+		writeSection(&b, "Changes to be committed", st, stagedFilter, stagedStyle, v)
 	}
 	if st.Unstaged > 0 {
-		writeSection(&b, "Changes not staged for commit", st, unstagedFilter, unstagedStyle)
+		writeSection(&b, "Changes not staged for commit", st, unstagedFilter, unstagedStyle, v)
 	}
 	if st.Untracked > 0 {
-		writeSection(&b, "Untracked files", st, untrackedFilter, untrackedStyle)
+		writeSection(&b, "Untracked files", st, untrackedFilter, untrackedStyle, v)
 	}
 
 	if !st.Dirty() {
@@ -79,7 +109,7 @@ func stagedFilter(f model.StatusFile) bool    { return f.Staged() && !f.Conflict
 func unstagedFilter(f model.StatusFile) bool  { return f.Unstaged() && !f.Conflict() }
 func untrackedFilter(f model.StatusFile) bool { return f.Untracked() }
 
-func writeSection(b *strings.Builder, title string, st *model.RepoStatus, filter fileFilter, style lipgloss.Style) {
+func writeSection(b *strings.Builder, title string, st *model.RepoStatus, filter fileFilter, style lipgloss.Style, v statusView) {
 	b.WriteString(style.Render(title))
 	b.WriteString("\n")
 	for _, f := range st.Files {
@@ -90,9 +120,29 @@ func writeSection(b *strings.Builder, title string, st *model.RepoStatus, filter
 		if f.OrigPath != "" {
 			line += " (from " + f.OrigPath + ")"
 		}
+		// Highlight the selected row (cursor maps into the flattened list).
+		if v.hasFocus {
+			for i := range v.files {
+				if i == v.cursor && v.files[i].Path == f.Path && v.files[i].X == f.X && v.files[i].Y == f.Y {
+					line = ">" + line[1:]
+					style = style.Background(lipgloss.Color("237"))
+				}
+			}
+		}
 		b.WriteString(style.Render(line))
 		b.WriteString("\n")
 	}
+}
+
+// selectedFile returns the file under the cursor (nil when clean).
+func (v *statusView) selectedFile() *model.StatusFile {
+	if v.repo == nil || len(v.files) == 0 {
+		return nil
+	}
+	if v.cursor >= len(v.files) {
+		v.cursor = len(v.files) - 1
+	}
+	return &v.files[v.cursor]
 }
 
 var (
