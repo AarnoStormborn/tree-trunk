@@ -24,11 +24,11 @@ type worktreesView struct {
 
 func (v worktreesView) render() string {
 	if v.repo == nil {
-		return dimStyle.Render("no repo selected")
+		return g.dim.Render("no repo selected")
 	}
 	wts := v.repo.Worktrees
 	if len(wts) == 0 {
-		return dimStyle.Render("no worktrees — press n to create one")
+		return g.dim.Render("no worktrees — press n to create one")
 	}
 	if v.cursor >= len(wts) {
 		v.cursor = len(wts) - 1
@@ -44,7 +44,7 @@ func (v worktreesView) render() string {
 
 	// Footer with the two-step delete hint.
 	b.WriteString("\n")
-	b.WriteString(dimStyle.Render("n new · d delete (two-step) · L lock/unlock · P prune · o open"))
+	b.WriteString(g.dim.Render("n new · d delete (two-step) · L lock/unlock · P prune · o open"))
 
 	return b.String()
 }
@@ -88,20 +88,20 @@ func renderWorktreeRow(wt model.Worktree, selected bool) string {
 
 	// Head (short) + path.
 	if len(wt.Head) >= 7 {
-		s += " " + dimStyle.Render(wt.Head[:7])
+		s += " " + g.dim.Render(wt.Head[:7])
 	}
-	s += "  " + dimStyle.Render(shortPath(wt.Path))
+	s += "  " + g.dim.Render(shortPath(wt.Path))
 
 	if wt.LockReason != "" {
-		s += dimStyle.Render(" (" + wt.LockReason + ")")
+		s += g.dim.Render(" (" + wt.LockReason + ")")
 	}
 	if wt.IsPathMissing {
-		s += dimStyle.Render(" [missing]")
+		s += g.dim.Render(" [missing]")
 	}
 
 	style := lipgloss.NewStyle()
 	if selected {
-		style = style.Background(lipgloss.Color("237"))
+		style = style.Background(g.selColor)
 	}
 	if wt.Dirty {
 		style = style.Foreground(lipgloss.Color("220"))
@@ -110,6 +110,7 @@ func renderWorktreeRow(wt model.Worktree, selected bool) string {
 }
 
 func shortPath(p string) string {
+	p = strings.ToValidUTF8(p, "�") // non-UTF8 path safety (04 §9)
 	home, err := homeDir()
 	if err == nil && strings.HasPrefix(p, home) {
 		return "~" + strings.TrimPrefix(p, home)
@@ -216,7 +217,7 @@ func (f *createForm) render(width int) string {
 		"path    " + f.fieldRow(f.focused == 2, f.path),
 	}
 	body := strings.Join(rows, "\n")
-	hint := dimStyle.Render("tab next · enter create · esc cancel")
+	hint := g.dim.Render("tab next · enter create · esc cancel")
 
 	box := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
@@ -229,7 +230,7 @@ func (f *createForm) fieldRow(active bool, t textinput.Model) string {
 	if active {
 		return t.View()
 	}
-	return dimStyle.Render(t.Value())
+	return g.dim.Render(t.Value())
 }
 
 func homeDir() (string, error) {
@@ -247,18 +248,18 @@ type confirmModal struct {
 func (c *confirmModal) render(width int) string {
 	title := lipgloss.NewStyle().Bold(true).Render(c.title)
 	if c.danger {
-		title = conflictStyle.Render(c.title)
+		title = g.conflict.Render(c.title)
 	}
 	confirm := c.confirmLabel
 	if c.danger {
-		confirm = conflictStyle.Render(c.confirmLabel)
+		confirm = g.conflict.Render(c.confirmLabel)
 	}
 	box := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		Padding(0, 2).
 		Width(64)
 	return box.Render(title + "\n\n" + c.msg + "\n\n" +
-		confirm + "  (enter)   " + dimStyle.Render("cancel (esc)"))
+		confirm + "  (enter)   " + g.dim.Render("cancel (esc)"))
 }
 
 // newDeleteConfirm is the first step of the two-step delete (safe remove).

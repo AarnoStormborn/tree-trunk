@@ -48,7 +48,7 @@ func (v *statusView) rebuildFiles() {
 // render produces the pane body for the current repo ("" when none).
 func (v statusView) render() string {
 	if v.repo == nil {
-		return dimStyle.Render("no repo selected")
+		return g.dim.Render("no repo selected")
 	}
 
 	var b strings.Builder
@@ -65,39 +65,39 @@ func (v statusView) render() string {
 	// Ahead/behind line.
 	switch {
 	case st.Upstream == "":
-		b.WriteString(dimStyle.Render("(no upstream)"))
+		b.WriteString(g.dim.Render("(no upstream)"))
 	case st.Ahead > 0 && st.Behind > 0:
-		b.WriteString(dimStyle.Render("Your branch is ahead of '" + st.Upstream + "' by " + itoa(st.Ahead) + " commits, and behind by " + itoa(st.Behind) + "."))
+		b.WriteString(g.dim.Render("Your branch is ahead of '" + st.Upstream + "' by " + itoa(st.Ahead) + " commits, and behind by " + itoa(st.Behind) + "."))
 	case st.Ahead > 0:
-		b.WriteString(dimStyle.Render("Your branch is ahead of '" + st.Upstream + "' by " + itoa(st.Ahead) + " commits."))
+		b.WriteString(g.dim.Render("Your branch is ahead of '" + st.Upstream + "' by " + itoa(st.Ahead) + " commits."))
 	case st.Behind > 0:
-		b.WriteString(dimStyle.Render("Your branch is behind '" + st.Upstream + "' by " + itoa(st.Behind) + " commits."))
+		b.WriteString(g.dim.Render("Your branch is behind '" + st.Upstream + "' by " + itoa(st.Behind) + " commits."))
 	default:
-		b.WriteString(dimStyle.Render("Your branch is up to date with '" + st.Upstream + "'."))
+		b.WriteString(g.dim.Render("Your branch is up to date with '" + st.Upstream + "'."))
 	}
 	b.WriteString("\n\n")
 
 	if st.Conflicts > 0 {
-		writeSection(&b, "Unmerged paths (conflicts)", st, conflictFilter, conflictStyle, v)
+		writeSection(&b, "Unmerged paths (conflicts)", st, conflictFilter, g.conflict, v)
 	}
 	if st.Staged > 0 {
-		writeSection(&b, "Changes to be committed", st, stagedFilter, stagedStyle, v)
+		writeSection(&b, "Changes to be committed", st, stagedFilter, g.staged, v)
 	}
 	if st.Unstaged > 0 {
-		writeSection(&b, "Changes not staged for commit", st, unstagedFilter, unstagedStyle, v)
+		writeSection(&b, "Changes not staged for commit", st, unstagedFilter, g.unstaged, v)
 	}
 	if st.Untracked > 0 {
-		writeSection(&b, "Untracked files", st, untrackedFilter, untrackedStyle, v)
+		writeSection(&b, "Untracked files", st, untrackedFilter, g.untracked, v)
 	}
 
 	if !st.Dirty() {
-		b.WriteString(dimStyle.Render("nothing to commit, working tree clean"))
+		b.WriteString(g.dim.Render("nothing to commit, working tree clean"))
 	}
 
 	// Truncate to the pane height.
 	lines := strings.Split(b.String(), "\n")
 	if v.height > 0 && len(lines) > v.height {
-		lines = append(lines[:v.height-1], dimStyle.Render("… truncated"))
+		lines = append(lines[:v.height-1], g.dim.Render("… truncated"))
 	}
 	return strings.Join(lines, "\n")
 }
@@ -125,7 +125,7 @@ func writeSection(b *strings.Builder, title string, st *model.RepoStatus, filter
 			for i := range v.files {
 				if i == v.cursor && v.files[i].Path == f.Path && v.files[i].X == f.X && v.files[i].Y == f.Y {
 					line = ">" + line[1:]
-					style = style.Background(lipgloss.Color("237"))
+					style = style.Background(g.selColor)
 				}
 			}
 		}
@@ -144,10 +144,3 @@ func (v *statusView) selectedFile() *model.StatusFile {
 	}
 	return &v.files[v.cursor]
 }
-
-var (
-	conflictStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("196")) // red
-	stagedStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("34"))  // green
-	unstagedStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("220")) // yellow
-	untrackedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("245")) // dim
-)

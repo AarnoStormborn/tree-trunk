@@ -5,7 +5,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 
 	"github.com/AarnoStormborn/tree-trunk/internal/config"
 	"github.com/AarnoStormborn/tree-trunk/internal/discover"
@@ -151,7 +150,7 @@ func renderRepoRow(r *model.Repo) string {
 	if branch == "" {
 		branch = "HEAD"
 	}
-	s += " " + dimStyle.Render(branch)
+	s += " " + g.dim.Render(branch)
 
 	if r.Status.Ahead > 0 || r.Status.Behind > 0 {
 		ab := ""
@@ -161,7 +160,7 @@ func renderRepoRow(r *model.Repo) string {
 		if r.Status.Behind > 0 {
 			ab += "↓" + itoa(r.Status.Behind)
 		}
-		s += " " + dimStyle.Render(ab)
+		s += " " + g.dim.Render(ab)
 	}
 
 	if sum := r.Status.Summary(); sum != "" {
@@ -169,7 +168,7 @@ func renderRepoRow(r *model.Repo) string {
 	}
 
 	if n := len(r.Worktrees); n > 0 {
-		s += " " + dimStyle.Render("("+itoa(n)+" wt)")
+		s += " " + g.dim.Render("("+itoa(n)+" wt)")
 	}
 	return s
 }
@@ -211,7 +210,7 @@ func (i worktreeItem) Title() string {
 	if i.wt.IsMain {
 		branch += " (main)"
 	}
-	s += branch + "  " + dimStyle.Render(shortPath(i.wt.Path))
+	s += branch + "  " + g.dim.Render(shortPath(i.wt.Path))
 	return s
 }
 
@@ -232,10 +231,6 @@ func indexOfID(items []list.Item, id string) int {
 func newRepoItemDelegate() list.ItemDelegate {
 	return list.NewDefaultDelegate()
 }
-
-var (
-	dimStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
-)
 
 // worktreeIndex returns the index of the worktree with the given path, or 0.
 func worktreeIndex(wts []model.Worktree, path string) int {

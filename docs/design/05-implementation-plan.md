@@ -122,14 +122,20 @@ stale diffs are dropped when switching repos; root-commit diffs work; the
 full loop (status → file diff → log → commit diff → vs-main) verified live
 in a herdr pane.
 
-### M4 — Polish (M)
+### M4 — Polish (M) — ✅ COMPLETE 2026-08-09
 
-- [ ] `?` filterable help cheatsheet from the key registry (04 §3)
-- [ ] Theming: palette, light/dark, `NO_COLOR` (04 §8)
-- [ ] Toasts/alerts/confirm polish, destructive styling, disabled-with-reason hints
-- [ ] Recent-repos persistence (`ctrl+r`)
-- [ ] Fullscreen toggle, terminal-size edge cases, non-UTF8 path handling
-- [ ] `--version`, man-ish `--help`, shell completion (P1 if time)
+- [x] `?` filterable help cheatsheet from the key registry (04 §3; herdr-style
+  `/` filter)
+- [x] Theming: `theme.go` palette (normal/dim/accent/dirty/conflict/clean/
+  worktree_child + selection), light/dark variants, `theme.overrides` hex,
+  `NO_COLOR` (04 §8)
+- [x] Toasts (3s auto-clear) for action results + errors; confirm dialogs
+  keep destructive styling; disabled-with-reason deferred to M5 hint bar
+- [x] Recent-repos persistence (`ctrl+r`): `~/.local/state/tree-trunk/
+  state.json`, MRU cap 20, save on quit, jump-to-repo menu
+- [x] Fullscreen toggle (`+/_`, hides the repo list); non-UTF8 path
+  sanitization in rendering (04 §9)
+- [x] `--version` / `--help` (flag.Usage); shell completion deferred (P1)
 
 ### M5 — Hardening & release (M)
 

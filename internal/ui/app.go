@@ -22,36 +22,38 @@ import (
 
 // M2 keybinding registry subset (full registry: docs/design/04-tui-layout.md §3).
 type keyMap struct {
-	Quit     key.Binding
-	Help     key.Binding
-	Refresh  key.Binding
-	Filter   key.Binding
-	Select   key.Binding
-	Suspend  key.Binding
-	MoveDown key.Binding
-	MoveUp   key.Binding
-	Focus    key.Binding
-	Expand   key.Binding
-	Collapse key.Binding
-	TabNext  key.Binding
-	TabPrev  key.Binding
-	Tab1     key.Binding
-	Tab2     key.Binding
-	Tab3     key.Binding
-	Tab4     key.Binding
-	Mode     key.Binding
-	Stat     key.Binding
-	Copy     key.Binding
-	PageDown key.Binding
-	PageUp   key.Binding
-	New      key.Binding
-	Delete   key.Binding
-	Open     key.Binding
-	Lock     key.Binding
-	Prune    key.Binding
-	Confirm  key.Binding
-	Cancel   key.Binding
-	NextF    key.Binding
+	Quit       key.Binding
+	Help       key.Binding
+	Refresh    key.Binding
+	Filter     key.Binding
+	Select     key.Binding
+	Suspend    key.Binding
+	MoveDown   key.Binding
+	MoveUp     key.Binding
+	Focus      key.Binding
+	Expand     key.Binding
+	Collapse   key.Binding
+	TabNext    key.Binding
+	TabPrev    key.Binding
+	Tab1       key.Binding
+	Tab2       key.Binding
+	Tab3       key.Binding
+	Tab4       key.Binding
+	Mode       key.Binding
+	Stat       key.Binding
+	Copy       key.Binding
+	PageDown   key.Binding
+	PageUp     key.Binding
+	Fullscreen key.Binding
+	Recent     key.Binding
+	New        key.Binding
+	Delete     key.Binding
+	Open       key.Binding
+	Lock       key.Binding
+	Prune      key.Binding
+	Confirm    key.Binding
+	Cancel     key.Binding
+	NextF      key.Binding
 }
 
 func (k keyMap) ShortHelp() []key.Binding {
@@ -63,36 +65,38 @@ func (k keyMap) FullHelp() [][]key.Binding {
 }
 
 var m2Keys = keyMap{
-	Quit:     key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q/ctrl+c", "quit")),
-	Help:     key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "help")),
-	Refresh:  key.NewBinding(key.WithKeys("R"), key.WithHelp("R", "refresh")),
-	Filter:   key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "filter")),
-	Select:   key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "focus")),
-	Suspend:  key.NewBinding(key.WithKeys("ctrl+z"), key.WithHelp("ctrl+z", "suspend")),
-	MoveDown: key.NewBinding(key.WithKeys("j", "down"), key.WithHelp("j/↓", "down")),
-	MoveUp:   key.NewBinding(key.WithKeys("k", "up"), key.WithHelp("k/↑", "up")),
-	Focus:    key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "focus pane")),
-	Expand:   key.NewBinding(key.WithKeys("l", "right"), key.WithHelp("l/→", "expand")),
-	Collapse: key.NewBinding(key.WithKeys("h", "left"), key.WithHelp("h/←", "collapse")),
-	TabNext:  key.NewBinding(key.WithKeys("]"), key.WithHelp("]", "next tab")),
-	TabPrev:  key.NewBinding(key.WithKeys("["), key.WithHelp("[", "prev tab")),
-	Tab1:     key.NewBinding(key.WithKeys("1"), key.WithHelp("1", "status")),
-	Tab2:     key.NewBinding(key.WithKeys("2"), key.WithHelp("2", "worktrees")),
-	Tab3:     key.NewBinding(key.WithKeys("3"), key.WithHelp("3", "log")),
-	Tab4:     key.NewBinding(key.WithKeys("4"), key.WithHelp("4", "diff")),
-	Mode:     key.NewBinding(key.WithKeys("m"), key.WithHelp("m", "diff mode")),
-	Stat:     key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "stat/raw")),
-	Copy:     key.NewBinding(key.WithKeys("c"), key.WithHelp("c", "copy")),
-	PageDown: key.NewBinding(key.WithKeys("pgdown"), key.WithHelp("pgdn", "page down")),
-	PageUp:   key.NewBinding(key.WithKeys("pgup"), key.WithHelp("pgup", "page up")),
-	New:      key.NewBinding(key.WithKeys("n"), key.WithHelp("n", "new worktree")),
-	Delete:   key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "delete worktree")),
-	Open:     key.NewBinding(key.WithKeys("o"), key.WithHelp("o", "open (copy path)")),
-	Lock:     key.NewBinding(key.WithKeys("L"), key.WithHelp("L", "lock/unlock")),
-	Prune:    key.NewBinding(key.WithKeys("P"), key.WithHelp("P", "prune")),
-	Confirm:  key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "confirm")),
-	Cancel:   key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "cancel")),
-	NextF:    key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "next field")),
+	Quit:       key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q/ctrl+c", "quit")),
+	Help:       key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "help")),
+	Refresh:    key.NewBinding(key.WithKeys("R"), key.WithHelp("R", "refresh")),
+	Filter:     key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "filter")),
+	Select:     key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "focus")),
+	Suspend:    key.NewBinding(key.WithKeys("ctrl+z"), key.WithHelp("ctrl+z", "suspend")),
+	MoveDown:   key.NewBinding(key.WithKeys("j", "down"), key.WithHelp("j/↓", "down")),
+	MoveUp:     key.NewBinding(key.WithKeys("k", "up"), key.WithHelp("k/↑", "up")),
+	Focus:      key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "focus pane")),
+	Expand:     key.NewBinding(key.WithKeys("l", "right"), key.WithHelp("l/→", "expand")),
+	Collapse:   key.NewBinding(key.WithKeys("h", "left"), key.WithHelp("h/←", "collapse")),
+	TabNext:    key.NewBinding(key.WithKeys("]"), key.WithHelp("]", "next tab")),
+	TabPrev:    key.NewBinding(key.WithKeys("["), key.WithHelp("[", "prev tab")),
+	Tab1:       key.NewBinding(key.WithKeys("1"), key.WithHelp("1", "status")),
+	Tab2:       key.NewBinding(key.WithKeys("2"), key.WithHelp("2", "worktrees")),
+	Tab3:       key.NewBinding(key.WithKeys("3"), key.WithHelp("3", "log")),
+	Tab4:       key.NewBinding(key.WithKeys("4"), key.WithHelp("4", "diff")),
+	Mode:       key.NewBinding(key.WithKeys("m"), key.WithHelp("m", "diff mode")),
+	Stat:       key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "stat/raw")),
+	Copy:       key.NewBinding(key.WithKeys("c"), key.WithHelp("c", "copy")),
+	PageDown:   key.NewBinding(key.WithKeys("pgdown"), key.WithHelp("pgdn", "page down")),
+	PageUp:     key.NewBinding(key.WithKeys("pgup"), key.WithHelp("pgup", "page up")),
+	Fullscreen: key.NewBinding(key.WithKeys("+", "_"), key.WithHelp("+/_", "fullscreen")),
+	Recent:     key.NewBinding(key.WithKeys("ctrl+r"), key.WithHelp("ctrl+r", "recent repos")),
+	New:        key.NewBinding(key.WithKeys("n"), key.WithHelp("n", "new worktree")),
+	Delete:     key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "delete worktree")),
+	Open:       key.NewBinding(key.WithKeys("o"), key.WithHelp("o", "open (copy path)")),
+	Lock:       key.NewBinding(key.WithKeys("L"), key.WithHelp("L", "lock/unlock")),
+	Prune:      key.NewBinding(key.WithKeys("P"), key.WithHelp("P", "prune")),
+	Confirm:    key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "confirm")),
+	Cancel:     key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "cancel")),
+	NextF:      key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "next field")),
 }
 
 // tab IDs for the right pane.
@@ -134,6 +138,11 @@ type appModel struct {
 
 	listFocused bool
 	selectedID  string
+
+	fullscreen bool
+	toast      string
+	toastUntil time.Time
+	appState   stateFile
 }
 
 // New returns the root model.
@@ -163,6 +172,7 @@ func newAppModel(cfg *config.Config, store *state.Store, refresher *state.Refres
 		spinner:     sp,
 		list:        l,
 		help:        help.New(),
+		appState:    loadState(cfg.Home),
 		events:      store.Subscribe(),
 		expanded:    map[string]bool{},
 		statusText:  "scanning…",
@@ -199,9 +209,16 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m2Keys.Quit):
 			m.quit = true
-			return m, tea.Quit
+			return m, tea.Batch(saveStateCmd(m.cfg.Home, m.appState), tea.Quit)
 		case key.Matches(msg, m2Keys.Help):
-			m.help.ShowAll = !m.help.ShowAll
+			m.modal = newHelpModal(helpBindings())
+			return m, nil
+		case key.Matches(msg, m2Keys.Fullscreen):
+			m.fullscreen = !m.fullscreen
+			m.layout()
+			return m, nil
+		case key.Matches(msg, m2Keys.Recent):
+			m.modal = m.recentModal()
 			return m, nil
 		case key.Matches(msg, m2Keys.Suspend):
 			return m, tea.Suspend
@@ -251,8 +268,7 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.log.loading = false
 		if msg.err != nil {
-			m.statusText = "✗ log: " + wtErrorText(msg.err)
-			return m, nil
+			return m, setToast(&m, "✗ log: "+wtErrorText(msg.err))
 		}
 		m.log.hasMore = len(msg.commits) == m.logPageSize()
 		m.log.setCommits(msg.commits, true)
@@ -288,6 +304,7 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if it, ok := items[0].(repoItem); ok {
 				m.selectedID = it.repo.ID
 				m.list.Select(0)
+				m.appState.touchRecent(it.repo.ID)
 			}
 		} else if m.selectedID != "" {
 			m.list.Select(indexOfID(items, m.selectedID))
@@ -313,6 +330,10 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case pollTickMsg:
 		return m, pollTickCmd(m.cfg.Refresh.PollIntervalMS)
+
+	case toastExpireMsg:
+		m.toast = ""
+		return m, nil
 
 	case spinner.TickMsg:
 		var cmd tea.Cmd
@@ -546,6 +567,9 @@ func (m *appModel) updateList(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	if m.list.Index() != prev {
+		if it, ok := m.list.SelectedItem().(repoItem); ok {
+			m.appState.touchRecent(it.repo.ID)
+		}
 		m.syncSelection()
 	}
 	return m, cmd
@@ -617,6 +641,20 @@ func (m *appModel) updateModal(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		m.modal = modal
 		return m, nil
+	case *helpModal:
+		if modal.handleKey(msg) {
+			m.modal = nil
+		}
+		return m, nil
+	case *recentModal:
+		close_, cmd := modal.handleKey(msg)
+		if close_ {
+			m.modal = nil
+		}
+		if cmd != nil {
+			return m, cmd
+		}
+		return m, nil
 	case *confirmModal:
 		switch {
 		case key.Matches(msg, m2Keys.Confirm):
@@ -649,24 +687,24 @@ func (m *appModel) handleAction(msg worktreeActionMsg) (tea.Model, tea.Cmd) {
 			}
 			return m, nil
 		default:
-			m.statusText = "✗ " + wtErrorText(msg.err)
-			return m, nil
+			return m, setToast(m, "✗ "+wtErrorText(msg.err))
 		}
 	default:
+		var text string
 		switch msg.op {
 		case "add":
-			m.statusText = "✓ worktree created"
+			text = "✓ worktree created"
 		case "remove":
-			m.statusText = "✓ worktree removed"
+			text = "✓ worktree removed"
 		case "lock":
-			m.statusText = "✓ lock toggled"
+			text = "✓ lock toggled"
 		case "prune":
-			m.statusText = "✓ pruned"
+			text = "✓ pruned"
 		case "open":
-			m.statusText = "✓ path copied to clipboard"
+			text = "✓ path copied to clipboard"
 		}
+		return m, tea.Batch(setToast(m, text), m.reloadWorktrees())
 	}
-	return m, m.reloadWorktrees()
 }
 
 func (m *appModel) reloadWorktrees() tea.Cmd {
@@ -746,13 +784,18 @@ func (m appModel) View() string {
 		return ""
 	}
 
-	left := m.list.View()
 	right := m.renderRight()
 
-	body := lipgloss.JoinHorizontal(lipgloss.Top,
-		lipgloss.NewStyle().Width(m.leftWidth()).Padding(0, 1).Render(left),
-		lipgloss.NewStyle().Width(m.rightWidth()).Padding(0, 1).BorderLeft(true).Render(right),
-	)
+	var body string
+	if m.fullscreen {
+		body = lipgloss.NewStyle().Width(m.rightWidth()).Padding(0, 1).Render(right)
+	} else {
+		left := m.list.View()
+		body = lipgloss.JoinHorizontal(lipgloss.Top,
+			lipgloss.NewStyle().Width(m.leftWidth()).Padding(0, 1).Render(left),
+			lipgloss.NewStyle().Width(m.rightWidth()).Padding(0, 1).BorderLeft(true).Render(right),
+		)
+	}
 
 	// Modal overlay on top of the split.
 	if m.modal != nil {
@@ -762,7 +805,7 @@ func (m appModel) View() string {
 
 	var statusLine string
 	if m.scanning {
-		statusLine = dimStyle.Render(m.statusText)
+		statusLine = g.dim.Render(m.statusText)
 	} else {
 		statusLine = m.statusText
 	}
@@ -817,7 +860,7 @@ func (m *appModel) layout() {
 }
 
 func (m *appModel) leftWidth() int {
-	if m.width <= 0 {
+	if m.fullscreen || m.width <= 0 {
 		return 0
 	}
 	w := m.width * 40 / 100
@@ -830,6 +873,9 @@ func (m *appModel) leftWidth() int {
 func (m *appModel) rightWidth() int {
 	if m.width <= 0 {
 		return 0
+	}
+	if m.fullscreen {
+		return m.width - 1
 	}
 	w := m.width - m.leftWidth() - 1
 	if w < 10 {
@@ -857,6 +903,11 @@ func Run(ctx context.Context, cfg *config.Config, store *state.Store, refresher 
 		return err
 	}
 	actions := newWorktreeActions(gitPath, store)
+	t := DefaultTheme()
+	if cfg.Theme.Variant == "light" {
+		t = LightTheme()
+	}
+	initStyles(t, cfg.Theme.Overrides)
 	p := tea.NewProgram(newAppModel(cfg, store, refresher, actions), tea.WithAltScreen())
 	_, err = p.Run()
 	if err != nil {

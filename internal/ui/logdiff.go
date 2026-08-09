@@ -48,13 +48,13 @@ func (i commitItem) FilterValue() string { return i.c.Subject + " " + i.c.Hash }
 
 func (v logView) render() string {
 	if v.repo == nil {
-		return dimStyle.Render("no repo selected")
+		return g.dim.Render("no repo selected")
 	}
 	if len(v.commits) == 0 {
 		if v.loading {
-			return dimStyle.Render("loading…")
+			return g.dim.Render("loading…")
 		}
-		return dimStyle.Render("no commits")
+		return g.dim.Render("no commits")
 	}
 	return v.list.View()
 }
@@ -111,27 +111,27 @@ type diffView struct {
 
 func (v *diffView) render() string {
 	if v.repo == nil {
-		return dimStyle.Render("no repo selected")
+		return g.dim.Render("no repo selected")
 	}
 	var head strings.Builder
 	head.WriteString(lipgloss.NewStyle().Bold(true).Render("diff: " + v.mode.String()))
 	if v.stat {
-		head.WriteString(dimStyle.Render("  [stat]"))
+		head.WriteString(g.dim.Render("  [stat]"))
 	}
 	if v.path != "" {
-		head.WriteString(dimStyle.Render("  " + v.path))
+		head.WriteString(g.dim.Render("  " + v.path))
 	}
-	head.WriteString(dimStyle.Render("   m cycle · p stat/raw"))
+	head.WriteString(g.dim.Render("   m cycle · p stat/raw"))
 	head.WriteString("\n")
 
 	var body string
 	switch {
 	case v.loading:
-		body = dimStyle.Render("loading…")
+		body = g.dim.Render("loading…")
 	case v.err != "":
-		body = conflictStyle.Render(v.err)
+		body = g.conflict.Render(v.err)
 	case v.content == "":
-		body = dimStyle.Render("(no diff)")
+		body = g.dim.Render("(no diff)")
 	default:
 		body = v.content
 	}
