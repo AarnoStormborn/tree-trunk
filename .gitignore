@@ -1,0 +1,13 @@
+# Build artifacts
+/tree-trunk
+/dist/
+*.exe
+
+# Test artifacts
+/tmp/
+*.test
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
