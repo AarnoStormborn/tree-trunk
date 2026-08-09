@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/harshsingh/tree-trunk/internal/model"
+	"github.com/AarnoStormborn/tree-trunk/internal/model"
 )
 
 // DetectError is a typed error for repo-resolution failures.

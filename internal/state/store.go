@@ -6,7 +6,7 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/harshsingh/tree-trunk/internal/model"
+	"github.com/AarnoStormborn/tree-trunk/internal/model"
 )
 
 // EventKind enumerates store mutations.

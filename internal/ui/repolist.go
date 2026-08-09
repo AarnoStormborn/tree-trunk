@@ -7,11 +7,11 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/harshsingh/tree-trunk/internal/config"
-	"github.com/harshsingh/tree-trunk/internal/discover"
-	"github.com/harshsingh/tree-trunk/internal/git"
-	"github.com/harshsingh/tree-trunk/internal/model"
-	"github.com/harshsingh/tree-trunk/internal/state"
+	"github.com/AarnoStormborn/tree-trunk/internal/config"
+	"github.com/AarnoStormborn/tree-trunk/internal/discover"
+	"github.com/AarnoStormborn/tree-trunk/internal/git"
+	"github.com/AarnoStormborn/tree-trunk/internal/model"
+	"github.com/AarnoStormborn/tree-trunk/internal/state"
 )
 
 // scanDoneMsg reports a completed scan.
@@ -174,14 +174,50 @@ func renderRepoRow(r *model.Repo) string {
 	return s
 }
 
-// itemsFromStore renders the store's repos as list items.
-func itemsFromStore(s *state.Store) []list.Item {
+// itemsFromStore renders the store's repos as list items; repos in the
+// expanded set get indented worktree child rows (02-data-model §3).
+func itemsFromStore(s *state.Store, expanded map[string]bool) []list.Item {
 	repos := s.List()
-	items := make([]list.Item, 0, len(repos))
+	items := make([]list.Item, 0, len(repos)*2)
 	for _, r := range repos {
 		items = append(items, repoItem{repo: r})
+		if expanded[r.ID] {
+			for _, wt := range r.Worktrees {
+				items = append(items, worktreeItem{repo: r, wt: wt})
+			}
+		}
 	}
 	return items
+}
+
+// worktreeItem is a child row under a repo (indented, actionable).
+type worktreeItem struct {
+	repo *model.Repo
+	wt   model.Worktree
+}
+
+func (i worktreeItem) Title() string {
+	s := "    "
+	if i.wt.Dirty {
+		s += "~ "
+	}
+	if i.wt.Locked {
+		s += "🔒 "
+	}
+	branch := i.wt.Branch
+	if branch == "" {
+		branch = "detached"
+	}
+	if i.wt.IsMain {
+		branch += " (main)"
+	}
+	s += branch + "  " + dimStyle.Render(shortPath(i.wt.Path))
+	return s
+}
+
+func (i worktreeItem) Description() string { return i.wt.Path }
+func (i worktreeItem) FilterValue() string {
+	return i.wt.Branch + " " + i.wt.Path
 }
 
 func indexOfID(items []list.Item, id string) int {
@@ -200,3 +236,23 @@ func newRepoItemDelegate() list.ItemDelegate {
 var (
 	dimStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
 )
+
+// worktreeIndex returns the index of the worktree with the given path, or 0.
+func worktreeIndex(wts []model.Worktree, path string) int {
+	for i, wt := range wts {
+		if wt.Path == path {
+			return i
+		}
+	}
+	return 0
+}
+
+// findWorktree returns the worktree with the given path, or nil.
+func findWorktree(repo *model.Repo, path string) *model.Worktree {
+	for i := range repo.Worktrees {
+		if repo.Worktrees[i].Path == path {
+			return &repo.Worktrees[i]
+		}
+	}
+	return nil
+}

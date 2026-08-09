@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/harshsingh/tree-trunk/internal/model"
+	"github.com/AarnoStormborn/tree-trunk/internal/model"
 )
 
 // Status runs `git status --porcelain=v1 -z --branch` in dir and parses it

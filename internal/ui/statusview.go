@@ -5,7 +5,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/harshsingh/tree-trunk/internal/model"
+	"github.com/AarnoStormborn/tree-trunk/internal/model"
 )
 
 // statusView renders the selected repo's Status (docs/design/04-tui-layout.md

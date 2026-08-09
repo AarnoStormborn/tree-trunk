@@ -70,7 +70,7 @@ repo shows `M f.txt` + `?? untracked.txt`; clean shows "nothing to commit");
 refresh storms are deduped (fingerprint + sequenced loads). Real `$HOME` scan
 measurement deferred to the M5 performance pass.
 
-### M2 — Worktree management (the core) (M–L)
+### M2 — Worktree management (the core) (M–L) — ✅ COMPLETE 2026-08-09
 
 **Goal:** create / delete / lock / unlock worktrees with the two-step safety
 flows.
@@ -87,9 +87,10 @@ flows.
 - [ ] Error codes → dialogs/toasts (03 §6)
 - [ ] **Tests:** worktree parser fixtures; create/remove/lock integration against sandbox repos; the two-step force flow end-to-end; branch-checked-out-elsewhere guard
 
-**Exit:** full create/delete cycle on a real repo with confirmations; force
-path requires explicit confirm; branches never deleted; dirty worktrees
-refused without force.
+**Exit (met):** full create/delete cycle on a real repo with confirmations;
+force path requires explicit confirm; branches never deleted; dirty worktrees
+refused without force; the TUI marks dirty worktrees `~`, locked `🔒`,
+prunable `⚠`/`[missing]`; prune cleans immediately (verified live).
 
 ### M3 — Log, diff, streaming inspection (L)
 

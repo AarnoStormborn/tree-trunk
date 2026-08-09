@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/harshsingh/tree-trunk/internal/model"
+	"github.com/AarnoStormborn/tree-trunk/internal/model"
 )
 
 func TestParseStatusBasic(t *testing.T) {

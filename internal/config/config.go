@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/AarnoStormborn/tree-trunk/internal/discover"
 	"github.com/BurntSushi/toml"
-	"github.com/harshsingh/tree-trunk/internal/discover"
 )
 
 // Config is the fully-resolved runtime configuration (flags > config >
@@ -178,6 +178,9 @@ func Load(cfg *Config) error {
 	for i, r := range cfg.ScanRoots {
 		cfg.ScanRoots[i] = discover.ExpandPath(r, cfg.Home)
 	}
+	// Same for the default worktree root (09 §2.1; missing-config early
+	// return below would otherwise skip the expansion).
+	cfg.Worktrees.Directory = discover.ExpandPath(cfg.Worktrees.Directory, cfg.Home)
 
 	path := cfg.ConfigPath
 	if path == "" {

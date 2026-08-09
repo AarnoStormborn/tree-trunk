@@ -6,8 +6,8 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/harshsingh/tree-trunk/internal/git"
-	"github.com/harshsingh/tree-trunk/internal/model"
+	"github.com/AarnoStormborn/tree-trunk/internal/git"
+	"github.com/AarnoStormborn/tree-trunk/internal/model"
 )
 
 // Refresher runs per-repo git refreshes on a bounded worker pool with
@@ -111,7 +111,50 @@ func (rf *Refresher) refreshOne(ctx context.Context, id string) {
 	} else {
 		repo.RefState = fp
 	}
+	// Worktree list rides along on every refresh (children rows + counts).
+	// Per-worktree DIRTY flags stay lazy (focused repo only — review M5).
+	if wts, werr := git.ListWorktrees(ctx, rf.runner, repo.Path); werr == nil {
+		repo.Worktrees = wts
+	}
 	rf.store.Upsert(repo) // preserves lifecycle; see below
+	rf.store.SetLifecycle(id, model.StateFresh, nil)
+}
+
+// LoadWorktrees refreshes repo.Worktrees from `git worktree list`. When
+// withDirty is true it also runs per-worktree status for LINKED worktrees
+// (review M5: dirty flags are lazy — focused/visible repos only).
+func (rf *Refresher) LoadWorktrees(ctx context.Context, id string, withDirty bool) {
+	repo := rf.store.Get(id)
+	if repo == nil || repo.Path == "" {
+		return
+	}
+	wts, err := git.ListWorktrees(ctx, rf.runner, repo.Path)
+	if err != nil {
+		rf.store.SetLifecycle(id, model.StateError, err)
+		return
+	}
+	if withDirty {
+		for i := range wts {
+			if wts[i].IsMain {
+				// main worktree dirtiness already in repo.Status
+				wts[i].Dirty = repo.Status.Dirty()
+				continue
+			}
+			if wts[i].IsPathMissing {
+				continue // path gone; skip the status call
+			}
+			dirty, err := git.WorktreeDirty(ctx, rf.runner, wts[i].Path)
+			if err == nil {
+				wts[i].Dirty = dirty
+			}
+		}
+	}
+	repo = rf.store.Get(id)
+	if repo == nil {
+		return
+	}
+	repo.Worktrees = wts
+	rf.store.Upsert(repo)
 	rf.store.SetLifecycle(id, model.StateFresh, nil)
 }
 

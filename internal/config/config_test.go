@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/harshsingh/tree-trunk/internal/discover"
+	"github.com/AarnoStormborn/tree-trunk/internal/discover"
 )
 
 func TestDefaults(t *testing.T) {

@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/harshsingh/tree-trunk/internal/git"
-	"github.com/harshsingh/tree-trunk/internal/model"
+	"github.com/AarnoStormborn/tree-trunk/internal/git"
+	"github.com/AarnoStormborn/tree-trunk/internal/model"
 )
 
 // fakeStatusRunner implements git.Runner, returning serialized porcelain for

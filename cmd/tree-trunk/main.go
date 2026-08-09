@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/harshsingh/tree-trunk/internal/config"
-	"github.com/harshsingh/tree-trunk/internal/discover"
-	"github.com/harshsingh/tree-trunk/internal/git"
-	"github.com/harshsingh/tree-trunk/internal/state"
-	"github.com/harshsingh/tree-trunk/internal/ui"
+	"github.com/AarnoStormborn/tree-trunk/internal/config"
+	"github.com/AarnoStormborn/tree-trunk/internal/discover"
+	"github.com/AarnoStormborn/tree-trunk/internal/git"
+	"github.com/AarnoStormborn/tree-trunk/internal/state"
+	"github.com/AarnoStormborn/tree-trunk/internal/ui"
 )
 
 var version = "0.1.0-dev" // overridden at release build time
