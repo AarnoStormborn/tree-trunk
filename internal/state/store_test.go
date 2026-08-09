@@ -3,7 +3,7 @@ package state
 import (
 	"testing"
 
-	"github.com/harshsingh/tree-trunk/internal/model"
+	"github.com/AarnoStormborn/tree-trunk/internal/model"
 )
 
 func mkRepo(id, name string) *model.Repo {

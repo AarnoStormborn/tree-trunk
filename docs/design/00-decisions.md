@@ -125,7 +125,8 @@
 - **Decision (user):** v1 `o` prints the worktree path and copies it to the
   clipboard (no shell spawn, no lazygit launch — those are post-v1
   candidates). **Clipboard mechanism (review m8):** `charmbracelet/x/clipboard`
-  (pure Go; consistent with the charm stack). **Degradation:** on failure
+  (pure Go, widely used — the charm x/clipboard module was not resolvable at
+  the version pinned; same API shape). **Degradation:** on failure
   (headless Linux, WSL/SSH, no clipboard binary) fall back to print-only +
   toast; never fail the action because the clipboard is unavailable.
   *(design Q7.)*

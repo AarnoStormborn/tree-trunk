@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/harshsingh/tree-trunk/internal/config"
-	"github.com/harshsingh/tree-trunk/internal/discover"
-	"github.com/harshsingh/tree-trunk/internal/git"
-	"github.com/harshsingh/tree-trunk/internal/state"
-	"github.com/harshsingh/tree-trunk/internal/ui"
+	"github.com/AarnoStormborn/tree-trunk/internal/config"
+	"github.com/AarnoStormborn/tree-trunk/internal/discover"
+	"github.com/AarnoStormborn/tree-trunk/internal/git"
+	"github.com/AarnoStormborn/tree-trunk/internal/state"
+	"github.com/AarnoStormborn/tree-trunk/internal/ui"
 )
 
 var version = "0.1.0-dev" // overridden at release build time
@@ -48,12 +48,13 @@ func run(args []string) error {
 	}
 
 	store := state.NewStore()
+	refresher := state.NewRefresher(git.NewExecRunner(gitPath), store, cfg.Workers)
 
 	if cfg.List {
 		return listRepos(cfg, gitPath)
 	}
 
-	return ui.Run(context.Background(), cfg, store, gitPath)
+	return ui.Run(context.Background(), cfg, store, refresher)
 }
 
 // listRepos implements the headless --list mode: print canonical repo paths,

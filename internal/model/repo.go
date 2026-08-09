@@ -67,16 +67,38 @@ type Commit struct {
 	Subject    string
 }
 
-// RepoStatus is the aggregated working-tree state of one worktree
-// (docs/design/02-data-model.md §1.5).
+// StatusFile is one entry from `git status --porcelain=v1 -z`
+// (docs/design/03-git-layer.md §4.1).
+type StatusFile struct {
+	// X/Y are the porcelain codes (X: index/staged, Y: worktree).
+	X, Y byte
+	// Path is the file path; OrigPath is set for renames/copies.
+	Path     string
+	OrigPath string
+}
+
+func (f StatusFile) Staged() bool   { return f.X != 0 && f.X != ' ' && f.X != '?' }
+func (f StatusFile) Unstaged() bool { return f.Y != 0 && f.Y != ' ' && f.Y != '?' }
+func (f StatusFile) Untracked() bool {
+	return f.X == '?' && f.Y == '?'
+}
+func (f StatusFile) Conflict() bool {
+	return f.X == 'U' || f.Y == 'U' || (f.X == 'A' && f.Y == 'A') || (f.X == 'D' && f.Y == 'D')
+}
+
+// RepoStatus is the working-tree state of one worktree
+// (docs/design/02-data-model.md §1.5). Counts are computed at parse time.
 type RepoStatus struct {
-	Staged    int // count of staged files
-	Unstaged  int // count of modified files (not untracked)
+	Branch   string // current branch ("HEAD" when detached)
+	Upstream string // "origin/main" or ""
+
+	Ahead, Behind int // vs upstream
+	Files         []StatusFile
+
+	Staged    int
+	Unstaged  int
 	Untracked int
 	Conflicts int
-	// Ahead/Behind vs upstream, from the branch of the worktree this status
-	// belongs to.
-	Ahead, Behind int
 }
 
 // Dirty reports whether the status has any changes.

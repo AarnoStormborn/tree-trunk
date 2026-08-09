@@ -4,10 +4,11 @@
 create and delete git worktrees, and inspect status / log / diff against each
 repo's main branch, all in one terminal session.
 
-> **Status: M0 complete (planning → skeleton).** Discovery, identity folding,
-> config, git layer, and the repo-list TUI work. Worktree management (M2) and
-> log/diff views (M3) are next. See [`docs/`](docs/) for the full research and
-> design.
+> **Status: M2 complete.** Discovery, config, git layer, live per-repo status
+> refresh (deduped, sequenced), the split-pane TUI (repo list + status +
+> worktrees), and **worktree management** (create / delete with two-step
+> safety / lock / unlock / prune) all work. Log/diff views (M3) are next.
+> See [`docs/`](docs/) for the full research and design.
 
 ## Install & run
 
@@ -33,8 +34,19 @@ go build -o tree-trunk ./cmd/tree-trunk
 - **Config**: `~/.config/tree-trunk/config.toml` (schema in
   [`docs/design/09-config.md`](docs/design/09-config.md)) — flags > config >
   defaults, `~`-expansion, `--scan-root` replaces / config adds.
-- **TUI**: repo list with lifecycle/status tokens, spinner, `/` filter,
-  `j/k` navigation, `R` re-scan, `?` help, `ctrl+z` suspend, `q` quit.
+- **TUI**: split layout — repo list (left, lifecycle/status tokens) + status
+  detail (right); selection-driven refresh, event bridge, spinner, `/`
+  filter, `tab` pane focus, `R` refresh, `?` help, `ctrl+z` suspend, `q`
+  quit.
+- **Refresh**: bounded worker pool, fingerprint dedup (ref reads only —
+  status re-reads every poll), sequenced loads, per-repo lifecycle
+  (stale/refreshing/fresh/error), optional `refresh.poll_interval_ms`.
+- **Worktrees (M2)**: `git worktree list --porcelain -z` parser; create via
+  form (auto-suggested `~/.worktrees/<repo>/<branch>` path, existing-vs-new
+  branch semantics, remote tracking); two-step delete (safe → explicit
+  `--force` confirm; branches never deleted); lock/unlock; prune; dirty `~`,
+  locked `🔒`, prunable `⚠` markers; expandable worktree children in the
+  repo list.
 
 ## Keybindings (M0 subset)
 
