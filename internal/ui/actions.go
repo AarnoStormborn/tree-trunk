@@ -6,6 +6,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
+
+	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/list"
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
@@ -155,4 +159,57 @@ func wtErrorText(err error) string {
 		}
 		return msg
 	}
+}
+
+// copyText copies text to the clipboard (print-only fallback, review m8).
+func copyText(text string) tea.Cmd {
+	return func() tea.Msg {
+		if err := clipboard.WriteAll(text); err != nil {
+			fmt.Println(text)
+		}
+		return worktreeActionMsg{op: "open", err: nil}
+	}
+}
+
+// --- M4 polish: toasts, help, recent repos ---
+
+// toastExpireMsg clears the transient status toast.
+type toastExpireMsg struct{}
+
+// setToast shows a transient status message (auto-clears after 3s).
+func setToast(m *appModel, text string) tea.Cmd {
+	m.toast = text
+	m.toastUntil = time.Now().Add(3 * time.Second)
+	return func() tea.Msg {
+		time.Sleep(3 * time.Second)
+		return toastExpireMsg{}
+	}
+}
+
+// saveStateCmd persists the app state file (best-effort).
+func saveStateCmd(home string, st stateFile) tea.Cmd {
+	return func() tea.Msg {
+		saveState(home, st)
+		return nil
+	}
+}
+
+// helpBindings returns all keybinding groups for the cheatsheet.
+func helpBindings() [][]key.Binding {
+	var all [][]key.Binding
+	all = append(all, m2Keys.FullHelp()...)
+	all = append(all, [][]key.Binding{{m2Keys.MoveDown, m2Keys.MoveUp, m2Keys.Select, m2Keys.New, m2Keys.Delete, m2Keys.Open, m2Keys.Lock, m2Keys.Prune, m2Keys.Mode, m2Keys.Stat}}...)
+	return all
+}
+
+// recentModal builds the ctrl+r menu from persisted recent repos that still
+// exist in the current store.
+func (m *appModel) recentModal() modal {
+	items := make([]list.Item, 0)
+	for _, id := range m.appState.RecentRepos {
+		if m.store.Get(id) != nil {
+			items = append(items, recentItem{id: id})
+		}
+	}
+	return newRecentModal(m, items)
 }

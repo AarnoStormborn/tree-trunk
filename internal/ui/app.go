@@ -22,29 +22,38 @@ import (
 
 // M2 keybinding registry subset (full registry: docs/design/04-tui-layout.md §3).
 type keyMap struct {
-	Quit     key.Binding
-	Help     key.Binding
-	Refresh  key.Binding
-	Filter   key.Binding
-	Select   key.Binding
-	Suspend  key.Binding
-	MoveDown key.Binding
-	MoveUp   key.Binding
-	Focus    key.Binding
-	Expand   key.Binding
-	Collapse key.Binding
-	TabNext  key.Binding
-	TabPrev  key.Binding
-	Tab1     key.Binding
-	Tab2     key.Binding
-	New      key.Binding
-	Delete   key.Binding
-	Open     key.Binding
-	Lock     key.Binding
-	Prune    key.Binding
-	Confirm  key.Binding
-	Cancel   key.Binding
-	NextF    key.Binding
+	Quit       key.Binding
+	Help       key.Binding
+	Refresh    key.Binding
+	Filter     key.Binding
+	Select     key.Binding
+	Suspend    key.Binding
+	MoveDown   key.Binding
+	MoveUp     key.Binding
+	Focus      key.Binding
+	Expand     key.Binding
+	Collapse   key.Binding
+	TabNext    key.Binding
+	TabPrev    key.Binding
+	Tab1       key.Binding
+	Tab2       key.Binding
+	Tab3       key.Binding
+	Tab4       key.Binding
+	Mode       key.Binding
+	Stat       key.Binding
+	Copy       key.Binding
+	PageDown   key.Binding
+	PageUp     key.Binding
+	Fullscreen key.Binding
+	Recent     key.Binding
+	New        key.Binding
+	Delete     key.Binding
+	Open       key.Binding
+	Lock       key.Binding
+	Prune      key.Binding
+	Confirm    key.Binding
+	Cancel     key.Binding
+	NextF      key.Binding
 }
 
 func (k keyMap) ShortHelp() []key.Binding {
@@ -56,35 +65,46 @@ func (k keyMap) FullHelp() [][]key.Binding {
 }
 
 var m2Keys = keyMap{
-	Quit:     key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q/ctrl+c", "quit")),
-	Help:     key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "help")),
-	Refresh:  key.NewBinding(key.WithKeys("R"), key.WithHelp("R", "refresh")),
-	Filter:   key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "filter")),
-	Select:   key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "focus")),
-	Suspend:  key.NewBinding(key.WithKeys("ctrl+z"), key.WithHelp("ctrl+z", "suspend")),
-	MoveDown: key.NewBinding(key.WithKeys("j", "down"), key.WithHelp("j/↓", "down")),
-	MoveUp:   key.NewBinding(key.WithKeys("k", "up"), key.WithHelp("k/↑", "up")),
-	Focus:    key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "focus pane")),
-	Expand:   key.NewBinding(key.WithKeys("l", "right"), key.WithHelp("l/→", "expand")),
-	Collapse: key.NewBinding(key.WithKeys("h", "left"), key.WithHelp("h/←", "collapse")),
-	TabNext:  key.NewBinding(key.WithKeys("]"), key.WithHelp("]", "next tab")),
-	TabPrev:  key.NewBinding(key.WithKeys("["), key.WithHelp("[", "prev tab")),
-	Tab1:     key.NewBinding(key.WithKeys("1"), key.WithHelp("1", "status")),
-	Tab2:     key.NewBinding(key.WithKeys("2"), key.WithHelp("2", "worktrees")),
-	New:      key.NewBinding(key.WithKeys("n"), key.WithHelp("n", "new worktree")),
-	Delete:   key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "delete worktree")),
-	Open:     key.NewBinding(key.WithKeys("o"), key.WithHelp("o", "open (copy path)")),
-	Lock:     key.NewBinding(key.WithKeys("L"), key.WithHelp("L", "lock/unlock")),
-	Prune:    key.NewBinding(key.WithKeys("P"), key.WithHelp("P", "prune")),
-	Confirm:  key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "confirm")),
-	Cancel:   key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "cancel")),
-	NextF:    key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "next field")),
+	Quit:       key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q/ctrl+c", "quit")),
+	Help:       key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "help")),
+	Refresh:    key.NewBinding(key.WithKeys("R"), key.WithHelp("R", "refresh")),
+	Filter:     key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "filter")),
+	Select:     key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "focus")),
+	Suspend:    key.NewBinding(key.WithKeys("ctrl+z"), key.WithHelp("ctrl+z", "suspend")),
+	MoveDown:   key.NewBinding(key.WithKeys("j", "down"), key.WithHelp("j/↓", "down")),
+	MoveUp:     key.NewBinding(key.WithKeys("k", "up"), key.WithHelp("k/↑", "up")),
+	Focus:      key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "focus pane")),
+	Expand:     key.NewBinding(key.WithKeys("l", "right"), key.WithHelp("l/→", "expand")),
+	Collapse:   key.NewBinding(key.WithKeys("h", "left"), key.WithHelp("h/←", "collapse")),
+	TabNext:    key.NewBinding(key.WithKeys("]"), key.WithHelp("]", "next tab")),
+	TabPrev:    key.NewBinding(key.WithKeys("["), key.WithHelp("[", "prev tab")),
+	Tab1:       key.NewBinding(key.WithKeys("1"), key.WithHelp("1", "status")),
+	Tab2:       key.NewBinding(key.WithKeys("2"), key.WithHelp("2", "worktrees")),
+	Tab3:       key.NewBinding(key.WithKeys("3"), key.WithHelp("3", "log")),
+	Tab4:       key.NewBinding(key.WithKeys("4"), key.WithHelp("4", "diff")),
+	Mode:       key.NewBinding(key.WithKeys("m"), key.WithHelp("m", "diff mode")),
+	Stat:       key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "stat/raw")),
+	Copy:       key.NewBinding(key.WithKeys("c"), key.WithHelp("c", "copy")),
+	PageDown:   key.NewBinding(key.WithKeys("pgdown"), key.WithHelp("pgdn", "page down")),
+	PageUp:     key.NewBinding(key.WithKeys("pgup"), key.WithHelp("pgup", "page up")),
+	Fullscreen: key.NewBinding(key.WithKeys("+", "_"), key.WithHelp("+/_", "fullscreen")),
+	Recent:     key.NewBinding(key.WithKeys("ctrl+r"), key.WithHelp("ctrl+r", "recent repos")),
+	New:        key.NewBinding(key.WithKeys("n"), key.WithHelp("n", "new worktree")),
+	Delete:     key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "delete worktree")),
+	Open:       key.NewBinding(key.WithKeys("o"), key.WithHelp("o", "open (copy path)")),
+	Lock:       key.NewBinding(key.WithKeys("L"), key.WithHelp("L", "lock/unlock")),
+	Prune:      key.NewBinding(key.WithKeys("P"), key.WithHelp("P", "prune")),
+	Confirm:    key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "confirm")),
+	Cancel:     key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "cancel")),
+	NextF:      key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "next field")),
 }
 
 // tab IDs for the right pane.
 const (
 	tabStatus = iota
 	tabWorktrees
+	tabLog
+	tabDiff
 )
 
 // modal is an overlay dialog (create form or confirmation).
@@ -107,6 +127,9 @@ type appModel struct {
 	tab        int
 	modal      modal
 	expanded   map[string]bool
+	log        logView
+	diff       diffView
+	diffCommit string // selected commit for DiffCommit mode
 	scanning   bool
 	quit       bool
 	statusText string
@@ -115,6 +138,11 @@ type appModel struct {
 
 	listFocused bool
 	selectedID  string
+
+	fullscreen bool
+	toast      string
+	toastUntil time.Time
+	appState   stateFile
 }
 
 // New returns the root model.
@@ -135,6 +163,8 @@ func newAppModel(cfg *config.Config, store *state.Store, refresher *state.Refres
 	}
 
 	return appModel{
+		log:         newLogView(),
+		diff:        diffView{mode: git.DiffWorking},
 		cfg:         cfg,
 		store:       store,
 		refresher:   refresher,
@@ -142,6 +172,7 @@ func newAppModel(cfg *config.Config, store *state.Store, refresher *state.Refres
 		spinner:     sp,
 		list:        l,
 		help:        help.New(),
+		appState:    loadState(cfg.Home),
 		events:      store.Subscribe(),
 		expanded:    map[string]bool{},
 		statusText:  "scanning…",
@@ -178,9 +209,16 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m2Keys.Quit):
 			m.quit = true
-			return m, tea.Quit
+			return m, tea.Batch(saveStateCmd(m.cfg.Home, m.appState), tea.Quit)
 		case key.Matches(msg, m2Keys.Help):
-			m.help.ShowAll = !m.help.ShowAll
+			m.modal = newHelpModal(helpBindings())
+			return m, nil
+		case key.Matches(msg, m2Keys.Fullscreen):
+			m.fullscreen = !m.fullscreen
+			m.layout()
+			return m, nil
+		case key.Matches(msg, m2Keys.Recent):
+			m.modal = m.recentModal()
 			return m, nil
 		case key.Matches(msg, m2Keys.Suspend):
 			return m, tea.Suspend
@@ -191,23 +229,68 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.statusText = "refreshing…"
 			return m, refreshAllCmd(m.cfg, m.store, m.refresher, m.selectedID)
 		case key.Matches(msg, m2Keys.TabNext):
-			m.tab = (m.tab + 1) % 2
-			return m, nil
+			m.tab = (m.tab + 1) % 4
+			return m, m.onTabChanged()
 		case key.Matches(msg, m2Keys.TabPrev):
-			m.tab = (m.tab + 1) % 2
-			return m, nil
+			m.tab = (m.tab + 3) % 4
+			return m, m.onTabChanged()
 		case key.Matches(msg, m2Keys.Tab1):
 			m.tab = tabStatus
 			return m, nil
 		case key.Matches(msg, m2Keys.Tab2):
 			m.tab = tabWorktrees
 			return m, m.reloadWorktrees()
+		case key.Matches(msg, m2Keys.Tab3):
+			m.tab = tabLog
+			return m, m.loadLog(false)
+		case key.Matches(msg, m2Keys.Tab4):
+			m.tab = tabDiff
+			return m, m.loadDiff()
 		}
 
-		if !m.listFocused && m.tab == tabWorktrees {
-			return m.updateWorktrees(msg)
+		if !m.listFocused {
+			switch m.tab {
+			case tabWorktrees:
+				return m.updateWorktrees(msg)
+			case tabLog:
+				return m.updateLog(msg)
+			case tabDiff:
+				return m.updateDiff(msg)
+			case tabStatus:
+				return m.updateStatus(msg)
+			}
 		}
 		return m.updateList(msg)
+
+	case logPageMsg:
+		if msg.repo != m.selectedID {
+			return m, nil // stale page for a repo we navigated away from
+		}
+		m.log.loading = false
+		if msg.err != nil {
+			return m, setToast(&m, "✗ log: "+wtErrorText(msg.err))
+		}
+		m.log.hasMore = len(msg.commits) == m.logPageSize()
+		m.log.setCommits(msg.commits, true)
+		return m, nil
+
+	case diffLoadedMsg:
+		if msg.repo != m.selectedID {
+			return m, nil // stale diff (single-flight, cancel-previous)
+		}
+		m.diff.loading = false
+		switch e := msg.err.(type) {
+		case git.ErrUntrackedFile:
+			m.diff.content = ""
+			m.diff.err = "untracked file — no diff to show"
+		case nil:
+			m.diff.content = msg.content
+			m.diff.err = ""
+		default:
+			m.diff.content = ""
+			m.diff.err = wtErrorText(e)
+		}
+		return m, nil
 
 	case scanDoneMsg:
 		m.scanning = false
@@ -221,6 +304,7 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if it, ok := items[0].(repoItem); ok {
 				m.selectedID = it.repo.ID
 				m.list.Select(0)
+				m.appState.touchRecent(it.repo.ID)
 			}
 		} else if m.selectedID != "" {
 			m.list.Select(indexOfID(items, m.selectedID))
@@ -247,6 +331,10 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case pollTickMsg:
 		return m, pollTickCmd(m.cfg.Refresh.PollIntervalMS)
 
+	case toastExpireMsg:
+		m.toast = ""
+		return m, nil
+
 	case spinner.TickMsg:
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
@@ -256,10 +344,165 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	}
 
-	if !m.listFocused && m.tab == tabWorktrees {
-		return m.updateWorktrees(msg)
+	if !m.listFocused {
+		switch m.tab {
+		case tabWorktrees:
+			return m.updateWorktrees(msg)
+		case tabLog:
+			return m.updateLog(msg)
+		case tabDiff:
+			return m.updateDiff(msg)
+		case tabStatus:
+			return m.updateStatus(msg)
+		}
 	}
 	return m.updateList(msg)
+}
+
+// --- right-pane key handlers (status / log / diff) ---
+
+func (m *appModel) updateStatus(msg tea.Msg) (tea.Model, tea.Cmd) {
+	k, ok := msg.(tea.KeyMsg)
+	if !ok {
+		return m, nil
+	}
+	switch {
+	case key.Matches(k, m2Keys.MoveDown):
+		if m.status.cursor < len(m.status.files)-1 {
+			m.status.cursor++
+		}
+	case key.Matches(k, m2Keys.MoveUp):
+		if m.status.cursor > 0 {
+			m.status.cursor--
+		}
+	case key.Matches(k, m2Keys.Select):
+		if f := m.status.selectedFile(); f != nil {
+			m.diff.path = f.Path
+			m.diff.mode = git.DiffFileWorking
+			if f.Staged() && !f.Unstaged() {
+				m.diff.mode = git.DiffFileStaged
+			}
+			m.diff.stat = false
+			m.tab = tabDiff
+			return m, m.loadDiff()
+		}
+	}
+	return m, nil
+}
+
+func (m *appModel) updateLog(msg tea.Msg) (tea.Model, tea.Cmd) {
+	k, ok := msg.(tea.KeyMsg)
+	if !ok {
+		return m, nil
+	}
+	switch {
+	case key.Matches(k, m2Keys.MoveDown):
+		m.log.list.CursorDown()
+		if m.log.hasMore && m.log.list.Index() >= len(m.log.commits)-3 && !m.log.loading {
+			return m, m.loadLog(true)
+		}
+	case key.Matches(k, m2Keys.MoveUp):
+		m.log.list.CursorUp()
+	case key.Matches(k, m2Keys.Select):
+		if it, ok := m.log.list.SelectedItem().(commitItem); ok {
+			m.diffCommit = it.c.Hash
+			m.diff.mode = git.DiffCommit
+			m.diff.path = ""
+			m.diff.stat = false
+			m.tab = tabDiff
+			return m, m.loadDiff()
+		}
+	case key.Matches(k, m2Keys.New):
+		// w → create worktree from the selected commit (04 §3.3).
+		if it, ok := m.log.list.SelectedItem().(commitItem); ok {
+			f := newCreateForm(m.log.repo, m.cfg.Worktrees.Directory)
+			f.base.SetValue(it.c.Hash)
+			m.modal = f
+		}
+	case key.Matches(k, m2Keys.Copy):
+		if it, ok := m.log.list.SelectedItem().(commitItem); ok {
+			return m, copyText(it.c.Hash)
+		}
+	case key.Matches(k, m2Keys.PageDown):
+		m.log.list.CursorDown()
+		for i := 0; i < 10 && m.log.list.Index() < len(m.log.commits)-1; i++ {
+			m.log.list.CursorDown()
+		}
+	case key.Matches(k, m2Keys.PageUp):
+		for i := 0; i < 10 && m.log.list.Index() > 0; i++ {
+			m.log.list.CursorUp()
+		}
+	}
+	return m, nil
+}
+
+func (m *appModel) updateDiff(msg tea.Msg) (tea.Model, tea.Cmd) {
+	k, ok := msg.(tea.KeyMsg)
+	if !ok {
+		return m, nil
+	}
+	switch {
+	case key.Matches(k, m2Keys.Mode):
+		m.diff.mode = (m.diff.mode + 1) % 3 // working → staged → vs main
+		m.diff.path = ""
+		m.diff.stat = false
+		return m, m.loadDiff()
+	case key.Matches(k, m2Keys.Stat):
+		m.diff.stat = !m.diff.stat
+		return m, m.loadDiff()
+	case key.Matches(k, m2Keys.Copy):
+		return m, copyText(m.diff.path)
+	}
+	return m, nil
+}
+
+// onTabChanged loads content when entering log/diff tabs.
+func (m *appModel) onTabChanged() tea.Cmd {
+	switch m.tab {
+	case tabLog:
+		return m.loadLog(false)
+	case tabDiff:
+		return m.loadDiff()
+	}
+	return nil
+}
+
+// loadLog fetches the first page (or the next page when append_).
+func (m *appModel) loadLog(append_ bool) tea.Cmd {
+	if m.selectedID == "" {
+		return nil
+	}
+	repo := m.store.Get(m.selectedID)
+	if repo == nil {
+		return nil
+	}
+	m.log.repo = repo
+	m.log.loading = true
+	skip := 0
+	if append_ {
+		skip = len(m.log.commits)
+	}
+	return loadMoreCmd(m.actions.runner, repo, skip, m.logPageSize())
+}
+
+func (m *appModel) logPageSize() int { return 200 }
+
+// loadDiff fetches the diff for the current diff-view state.
+func (m *appModel) loadDiff() tea.Cmd {
+	if m.selectedID == "" {
+		return nil
+	}
+	repo := m.store.Get(m.selectedID)
+	if repo == nil {
+		return nil
+	}
+	m.diff.repo = repo
+	m.diff.loading = true
+	commit := m.diffCommit
+	if m.diff.mode != git.DiffCommit {
+		commit = ""
+	}
+	return diffCmd(m.actions.runner, repo, m.diff.mode, m.diff.stat, m.diff.path, commit)
 }
 
 // --- list pane ---
@@ -324,6 +567,9 @@ func (m *appModel) updateList(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	if m.list.Index() != prev {
+		if it, ok := m.list.SelectedItem().(repoItem); ok {
+			m.appState.touchRecent(it.repo.ID)
+		}
 		m.syncSelection()
 	}
 	return m, cmd
@@ -395,6 +641,20 @@ func (m *appModel) updateModal(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		m.modal = modal
 		return m, nil
+	case *helpModal:
+		if modal.handleKey(msg) {
+			m.modal = nil
+		}
+		return m, nil
+	case *recentModal:
+		close_, cmd := modal.handleKey(msg)
+		if close_ {
+			m.modal = nil
+		}
+		if cmd != nil {
+			return m, cmd
+		}
+		return m, nil
 	case *confirmModal:
 		switch {
 		case key.Matches(msg, m2Keys.Confirm):
@@ -427,24 +687,24 @@ func (m *appModel) handleAction(msg worktreeActionMsg) (tea.Model, tea.Cmd) {
 			}
 			return m, nil
 		default:
-			m.statusText = "✗ " + wtErrorText(msg.err)
-			return m, nil
+			return m, setToast(m, "✗ "+wtErrorText(msg.err))
 		}
 	default:
+		var text string
 		switch msg.op {
 		case "add":
-			m.statusText = "✓ worktree created"
+			text = "✓ worktree created"
 		case "remove":
-			m.statusText = "✓ worktree removed"
+			text = "✓ worktree removed"
 		case "lock":
-			m.statusText = "✓ lock toggled"
+			text = "✓ lock toggled"
 		case "prune":
-			m.statusText = "✓ pruned"
+			text = "✓ pruned"
 		case "open":
-			m.statusText = "✓ path copied to clipboard"
+			text = "✓ path copied to clipboard"
 		}
+		return m, tea.Batch(setToast(m, text), m.reloadWorktrees())
 	}
-	return m, m.reloadWorktrees()
 }
 
 func (m *appModel) reloadWorktrees() tea.Cmd {
@@ -460,12 +720,18 @@ func (m *appModel) syncSelection() {
 	if m.selectedID == "" {
 		m.status.repo = nil
 		m.wt.repo = nil
+		m.log.repo = nil
+		m.diff.repo = nil
 		return
 	}
 	r := m.store.Get(m.selectedID)
 	m.status.repo = r
+	m.status.rebuildFiles()
+	m.status.hasFocus = !m.listFocused && m.tab == tabStatus
 	m.wt.repo = r
 	m.wt.hasFocus = !m.listFocused && m.tab == tabWorktrees
+	m.log.repo = r
+	m.diff.repo = r
 }
 
 func (m *appModel) refreshFocused() {
@@ -518,13 +784,18 @@ func (m appModel) View() string {
 		return ""
 	}
 
-	left := m.list.View()
 	right := m.renderRight()
 
-	body := lipgloss.JoinHorizontal(lipgloss.Top,
-		lipgloss.NewStyle().Width(m.leftWidth()).Padding(0, 1).Render(left),
-		lipgloss.NewStyle().Width(m.rightWidth()).Padding(0, 1).BorderLeft(true).Render(right),
-	)
+	var body string
+	if m.fullscreen {
+		body = lipgloss.NewStyle().Width(m.rightWidth()).Padding(0, 1).Render(right)
+	} else {
+		left := m.list.View()
+		body = lipgloss.JoinHorizontal(lipgloss.Top,
+			lipgloss.NewStyle().Width(m.leftWidth()).Padding(0, 1).Render(left),
+			lipgloss.NewStyle().Width(m.rightWidth()).Padding(0, 1).BorderLeft(true).Render(right),
+		)
+	}
 
 	// Modal overlay on top of the split.
 	if m.modal != nil {
@@ -534,7 +805,7 @@ func (m appModel) View() string {
 
 	var statusLine string
 	if m.scanning {
-		statusLine = dimStyle.Render(m.statusText)
+		statusLine = g.dim.Render(m.statusText)
 	} else {
 		statusLine = m.statusText
 	}
@@ -552,7 +823,7 @@ func (m appModel) View() string {
 func (m appModel) renderRight() string {
 	// Tab bar.
 	tabs := ""
-	for i, name := range []string{"1 status", "2 worktrees"} {
+	for i, name := range []string{"1 status", "2 worktrees", "3 log", "4 diff"} {
 		style := lipgloss.NewStyle().Padding(0, 1)
 		if i == m.tab {
 			style = style.Bold(true).Underline(true)
@@ -565,6 +836,10 @@ func (m appModel) renderRight() string {
 		content = m.status.render()
 	case tabWorktrees:
 		content = m.wt.render()
+	case tabLog:
+		content = m.log.render()
+	case tabDiff:
+		content = m.diff.render()
 	}
 	return tabs + "\n" + content
 }
@@ -577,10 +852,15 @@ func (m *appModel) layout() {
 	m.status.height = m.height - 4
 	m.wt.width = statusW
 	m.wt.height = m.height - 4
+	m.log.list.SetSize(statusW, m.height-5)
+	m.log.width = statusW
+	m.log.height = m.height - 4
+	m.diff.width = statusW
+	m.diff.height = m.height - 5
 }
 
 func (m *appModel) leftWidth() int {
-	if m.width <= 0 {
+	if m.fullscreen || m.width <= 0 {
 		return 0
 	}
 	w := m.width * 40 / 100
@@ -593,6 +873,9 @@ func (m *appModel) leftWidth() int {
 func (m *appModel) rightWidth() int {
 	if m.width <= 0 {
 		return 0
+	}
+	if m.fullscreen {
+		return m.width - 1
 	}
 	w := m.width - m.leftWidth() - 1
 	if w < 10 {
@@ -620,6 +903,11 @@ func Run(ctx context.Context, cfg *config.Config, store *state.Store, refresher 
 		return err
 	}
 	actions := newWorktreeActions(gitPath, store)
+	t := DefaultTheme()
+	if cfg.Theme.Variant == "light" {
+		t = LightTheme()
+	}
+	initStyles(t, cfg.Theme.Overrides)
 	p := tea.NewProgram(newAppModel(cfg, store, refresher, actions), tea.WithAltScreen())
 	_, err = p.Run()
 	if err != nil {

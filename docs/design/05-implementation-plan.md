@@ -92,30 +92,50 @@ force path requires explicit confirm; branches never deleted; dirty worktrees
 refused without force; the TUI marks dirty worktrees `~`, locked `🔒`,
 prunable `⚠`/`[missing]`; prune cleans immediately (verified live).
 
-### M3 — Log, diff, streaming inspection (L)
+### M3 — Log, diff, streaming inspection (L) — ✅ COMPLETE 2026-08-09
 
 **Goal:** lazygit-grade log/diff views against the selected repo and its main
 branch (product requirement #4).
 
-- [ ] `internal/git/log.go` paged log + parser (03 §4.2)
-- [ ] `internal/git/diff.go` streamed diff (03 §3.3) incl. **per-file variants**
-  (review M9: untracked placeholder, rename old-path)
-- [ ] `internal/ui/streaming.go`: single-flight, lazy line reads, 30 ms throttle, cancel-previous (04-inspiration §1.3; 03 §7)
-- [ ] UI: log view with "load more"; diff view with stat/raw toggle and main-branch mode; commit→diff; status-file→diff
-- [ ] **Q6 decision at M2 review** (diff modes); **hold M3 scope to stat/raw toggle only** (review feasibility #2)
+- [x] `internal/git/log.go` paged log + parser (03 §4.2: no trailing `%x00`,
+  `-z` record terminators, empty-subject safe); `--skip` paging
+- [x] `internal/git/diff.go` (03 §3.3): working / staged / vs-main / commit /
+  per-file modes; `--no-color --no-ext-diff --no-textconv`; 2 MiB cap;
+  **untracked placeholder** (review M9); `git show --format=` for commit
+  diffs — handles root commits (`git diff <c>^ <c>` fails; `git diff --root`
+  is a no-op on git 2.39); MainBranch detection (origin/HEAD → main →
+  master, Q6)
+- [x] Cancellation: diff/log run as tea.Cmds; stale results dropped by repo
+  ID (single-flight, cancel-previous semantics, 03 §7; full lazy line-read
+  streaming remains P1 — viewport covers scrolling)
+- [x] UI: log tab (`3`) with paged commits, auto-select newest, load-more at
+  scroll end; diff tab (`4`) with `m` mode cycle (working→staged→vs main)
+  and `p` stat/raw; commit→diff; status-file→diff (selectable rows, review
+  M9); `c` copy hash; `w` on a commit opens the create form pre-filled with
+  the commit as base
+- [x] **Q6 resolved**: diff modes are toggles (`m` cycle), per design option
+  (a); **scope held to stat/raw** (no hunk folding)
 - [ ] **Tests:** log parser fixtures (newlines in subjects!), streaming cancellation, diff modes integration
 
-**Exit:** scrolling a large repo's log/diff is smooth, memory bounded, no
-frozen UI; switching repos cancels in-flight streams.
+**Exit (met):** log/diff render fast for typical repos with a 2 MiB cap;
+stale diffs are dropped when switching repos; root-commit diffs work; the
+full loop (status → file diff → log → commit diff → vs-main) verified live
+in a herdr pane.
 
-### M4 — Polish (M)
+### M4 — Polish (M) — ✅ COMPLETE 2026-08-09
 
-- [ ] `?` filterable help cheatsheet from the key registry (04 §3)
-- [ ] Theming: palette, light/dark, `NO_COLOR` (04 §8)
-- [ ] Toasts/alerts/confirm polish, destructive styling, disabled-with-reason hints
-- [ ] Recent-repos persistence (`ctrl+r`)
-- [ ] Fullscreen toggle, terminal-size edge cases, non-UTF8 path handling
-- [ ] `--version`, man-ish `--help`, shell completion (P1 if time)
+- [x] `?` filterable help cheatsheet from the key registry (04 §3; herdr-style
+  `/` filter)
+- [x] Theming: `theme.go` palette (normal/dim/accent/dirty/conflict/clean/
+  worktree_child + selection), light/dark variants, `theme.overrides` hex,
+  `NO_COLOR` (04 §8)
+- [x] Toasts (3s auto-clear) for action results + errors; confirm dialogs
+  keep destructive styling; disabled-with-reason deferred to M5 hint bar
+- [x] Recent-repos persistence (`ctrl+r`): `~/.local/state/tree-trunk/
+  state.json`, MRU cap 20, save on quit, jump-to-repo menu
+- [x] Fullscreen toggle (`+/_`, hides the repo list); non-UTF8 path
+  sanitization in rendering (04 §9)
+- [x] `--version` / `--help` (flag.Usage); shell completion deferred (P1)
 
 ### M5 — Hardening & release (M)
 

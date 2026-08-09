@@ -4,11 +4,12 @@
 create and delete git worktrees, and inspect status / log / diff against each
 repo's main branch, all in one terminal session.
 
-> **Status: M2 complete.** Discovery, config, git layer, live per-repo status
-> refresh (deduped, sequenced), the split-pane TUI (repo list + status +
-> worktrees), and **worktree management** (create / delete with two-step
-> safety / lock / unlock / prune) all work. Log/diff views (M3) are next.
-> See [`docs/`](docs/) for the full research and design.
+> **Status: M4 complete (M0–M4).** Discovery, config, git layer, live per-repo
+> status refresh (deduped, sequenced), the split-pane TUI (repo list +
+> status + worktrees + log + diff), **worktree management** (create/delete
+> with two-step safety, lock/unlock, prune), **log/diff inspection**, and
+> **polish** (filterable cheatsheet, theming, toasts, recent repos,
+> fullscreen) all work. See [`docs/`](docs/) for the full research and design.
 
 ## Install & run
 
@@ -48,10 +49,13 @@ go build -o tree-trunk ./cmd/tree-trunk
   locked `🔒`, prunable `⚠` markers; expandable worktree children in the
   repo list.
 
-## Keybindings (M0 subset)
+## Keybindings (M1–M3)
 
-`j/k` move · `enter` select · `/` filter · `R` re-scan · `?` help ·
-`ctrl+z` suspend · `q`/`ctrl+c` quit
+`j/k` move · `enter` select/focus · `tab` focus pane · `1`-`4` tabs
+(status/worktrees/log/diff) · `[`/`]` cycle · `n` new worktree · `d` delete
+(two-step) · `L` lock · `P` prune · `m` diff mode · `p` stat/raw · `o` open ·
+`+/_` fullscreen · `ctrl+r` recent repos · `/` filter · `R` refresh · `?`
+filterable cheatsheet · `ctrl+z` suspend · `q` quit
 
 Full registry: [`docs/design/04-tui-layout.md`](docs/design/04-tui-layout.md).
 

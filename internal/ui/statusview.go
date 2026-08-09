@@ -9,16 +9,46 @@ import (
 )
 
 // statusView renders the selected repo's Status (docs/design/04-tui-layout.md
-// §5.1). It is a pure projection of the model — no git calls here.
+// §5.1). It is a pure projection of the model — no git calls here. File rows
+// are selectable (j/k) so `enter` can open a scoped diff (review M9).
 type statusView struct {
-	repo          *model.Repo
-	width, height int
+	repo     *model.Repo
+	width    int
+	height   int
+	files    []model.StatusFile // flattened, section-ordered rows
+	cursor   int
+	hasFocus bool
+}
+
+// rebuildFiles flattens the file rows in section order (conflicts, staged,
+// unstaged, untracked) for cursor navigation.
+func (v *statusView) rebuildFiles() {
+	if v.repo == nil {
+		v.files = nil
+		return
+	}
+	st := &v.repo.Status
+	v.files = v.files[:0]
+	appendFiles := func(filter fileFilter) {
+		for _, f := range st.Files {
+			if filter(f) {
+				v.files = append(v.files, f)
+			}
+		}
+	}
+	appendFiles(conflictFilter)
+	appendFiles(stagedFilter)
+	appendFiles(unstagedFilter)
+	appendFiles(untrackedFilter)
+	if v.cursor >= len(v.files) {
+		v.cursor = 0
+	}
 }
 
 // render produces the pane body for the current repo ("" when none).
 func (v statusView) render() string {
 	if v.repo == nil {
-		return dimStyle.Render("no repo selected")
+		return g.dim.Render("no repo selected")
 	}
 
 	var b strings.Builder
@@ -35,39 +65,39 @@ func (v statusView) render() string {
 	// Ahead/behind line.
 	switch {
 	case st.Upstream == "":
-		b.WriteString(dimStyle.Render("(no upstream)"))
+		b.WriteString(g.dim.Render("(no upstream)"))
 	case st.Ahead > 0 && st.Behind > 0:
-		b.WriteString(dimStyle.Render("Your branch is ahead of '" + st.Upstream + "' by " + itoa(st.Ahead) + " commits, and behind by " + itoa(st.Behind) + "."))
+		b.WriteString(g.dim.Render("Your branch is ahead of '" + st.Upstream + "' by " + itoa(st.Ahead) + " commits, and behind by " + itoa(st.Behind) + "."))
 	case st.Ahead > 0:
-		b.WriteString(dimStyle.Render("Your branch is ahead of '" + st.Upstream + "' by " + itoa(st.Ahead) + " commits."))
+		b.WriteString(g.dim.Render("Your branch is ahead of '" + st.Upstream + "' by " + itoa(st.Ahead) + " commits."))
 	case st.Behind > 0:
-		b.WriteString(dimStyle.Render("Your branch is behind '" + st.Upstream + "' by " + itoa(st.Behind) + " commits."))
+		b.WriteString(g.dim.Render("Your branch is behind '" + st.Upstream + "' by " + itoa(st.Behind) + " commits."))
 	default:
-		b.WriteString(dimStyle.Render("Your branch is up to date with '" + st.Upstream + "'."))
+		b.WriteString(g.dim.Render("Your branch is up to date with '" + st.Upstream + "'."))
 	}
 	b.WriteString("\n\n")
 
 	if st.Conflicts > 0 {
-		writeSection(&b, "Unmerged paths (conflicts)", st, conflictFilter, conflictStyle)
+		writeSection(&b, "Unmerged paths (conflicts)", st, conflictFilter, g.conflict, v)
 	}
 	if st.Staged > 0 {
-		writeSection(&b, "Changes to be committed", st, stagedFilter, stagedStyle)
+		writeSection(&b, "Changes to be committed", st, stagedFilter, g.staged, v)
 	}
 	if st.Unstaged > 0 {
-		writeSection(&b, "Changes not staged for commit", st, unstagedFilter, unstagedStyle)
+		writeSection(&b, "Changes not staged for commit", st, unstagedFilter, g.unstaged, v)
 	}
 	if st.Untracked > 0 {
-		writeSection(&b, "Untracked files", st, untrackedFilter, untrackedStyle)
+		writeSection(&b, "Untracked files", st, untrackedFilter, g.untracked, v)
 	}
 
 	if !st.Dirty() {
-		b.WriteString(dimStyle.Render("nothing to commit, working tree clean"))
+		b.WriteString(g.dim.Render("nothing to commit, working tree clean"))
 	}
 
 	// Truncate to the pane height.
 	lines := strings.Split(b.String(), "\n")
 	if v.height > 0 && len(lines) > v.height {
-		lines = append(lines[:v.height-1], dimStyle.Render("… truncated"))
+		lines = append(lines[:v.height-1], g.dim.Render("… truncated"))
 	}
 	return strings.Join(lines, "\n")
 }
@@ -79,7 +109,7 @@ func stagedFilter(f model.StatusFile) bool    { return f.Staged() && !f.Conflict
 func unstagedFilter(f model.StatusFile) bool  { return f.Unstaged() && !f.Conflict() }
 func untrackedFilter(f model.StatusFile) bool { return f.Untracked() }
 
-func writeSection(b *strings.Builder, title string, st *model.RepoStatus, filter fileFilter, style lipgloss.Style) {
+func writeSection(b *strings.Builder, title string, st *model.RepoStatus, filter fileFilter, style lipgloss.Style, v statusView) {
 	b.WriteString(style.Render(title))
 	b.WriteString("\n")
 	for _, f := range st.Files {
@@ -90,14 +120,27 @@ func writeSection(b *strings.Builder, title string, st *model.RepoStatus, filter
 		if f.OrigPath != "" {
 			line += " (from " + f.OrigPath + ")"
 		}
+		// Highlight the selected row (cursor maps into the flattened list).
+		if v.hasFocus {
+			for i := range v.files {
+				if i == v.cursor && v.files[i].Path == f.Path && v.files[i].X == f.X && v.files[i].Y == f.Y {
+					line = ">" + line[1:]
+					style = style.Background(g.selColor)
+				}
+			}
+		}
 		b.WriteString(style.Render(line))
 		b.WriteString("\n")
 	}
 }
 
-var (
-	conflictStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("196")) // red
-	stagedStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("34"))  // green
-	unstagedStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("220")) // yellow
-	untrackedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("245")) // dim
-)
+// selectedFile returns the file under the cursor (nil when clean).
+func (v *statusView) selectedFile() *model.StatusFile {
+	if v.repo == nil || len(v.files) == 0 {
+		return nil
+	}
+	if v.cursor >= len(v.files) {
+		v.cursor = len(v.files) - 1
+	}
+	return &v.files[v.cursor]
+}
