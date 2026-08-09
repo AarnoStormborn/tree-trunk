@@ -43,19 +43,32 @@ paths), `--no-scan`, `--scan-root`, `--list` all work; identity folding
 verified end-to-end (3 hits → 2 repos); quitting is clean. Scanning a real
 `$HOME` still to be measured (M1 will do the performance pass).
 
-### M1 — Status refresh + repo detail (M)
+### M1 — Status refresh + repo detail (M) — ✅ COMPLETE 2026-08-09
 
 **Goal:** per-repo live state; right pane shows status; refresh dedup.
 
-- [ ] `internal/git/status.go` porcelain v1 `-z` parser + `--branch` header
-- [ ] `internal/git` branch/ahead-behind + fingerprint (03 §3.1)
-- [ ] `state/refresh.go`: bounded pool refresher, fingerprint dedup, sequenced loads, per-repo lifecycle (stale/refreshing/fresh/error)
-- [ ] UI: token rows (02-data-model §3), per-repo state icons, status view (04 §5.1), hint/status bars
-- [ ] `R` refresh, `/` filter repo list
-- [ ] **Tests:** status parser fixtures (renames, conflicts, untracked), refresh dedup unit, refresh integration on sandbox
+- [x] `internal/git/status.go` porcelain v1 `-z` parser + `--branch` header
+  (renames, conflicts, untracked, ahead/behind, detached HEAD)
+- [x] `internal/git/fingerprint.go` — for-each-ref + explicit `rev-parse
+  HEAD` (review M3); verified: unchanged on working-tree edits, changes on
+  commit AND on detached-HEAD moves
+- [x] `state/refresh.go`: bounded-pool refresher, fingerprint stored as
+  `RefState`, **sequenced loads** (stale results dropped — tested with a
+  blocking runner), lifecycle stale/refreshing/fresh/error, bare-repo skip
+- [x] UI: token rows with real branch/status/ahead-behind (02 §3), status
+  detail pane (04 §5.1) with conflicts/staged/unstaged/untracked sections,
+  split layout 40/60, selection-driven refresh + event bridge + `R` +
+  optional `refresh.poll_interval_ms` poller
+- [x] `R` refresh, `/` filter, `tab` pane focus
+- [x] **Tests:** status parser fixtures, fingerprint semantics, refresh
+  dedup/sequencing/lifecycle (fake runner), status integration on sandbox —
+  all green under `-race`; live-verified in a herdr pane
 
-**Exit:** a home-dir scan shows every repo with branch/status/ahead-behind;
-selection updates the status tab live; refresh storms are deduped.
+**Exit (met):** a sandbox scan shows every repo with branch/status/ahead-behind
+and lifecycle icons; selection updates the status pane live (verified: dirty
+repo shows `M f.txt` + `?? untracked.txt`; clean shows "nothing to commit");
+refresh storms are deduped (fingerprint + sequenced loads). Real `$HOME` scan
+measurement deferred to the M5 performance pass.
 
 ### M2 — Worktree management (the core) (M–L)
 

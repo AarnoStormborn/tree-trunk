@@ -53,6 +53,9 @@ func (s *Store) Upsert(repo *model.Repo) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	_, existed := s.repos[repo.ID]
+	if repo.Lifecycle == "" {
+		repo.Lifecycle = model.StateStale
+	}
 	if prev, ok := s.repos[repo.ID]; ok {
 		repo.Lifecycle = prev.Lifecycle
 		repo.LastError = prev.LastError

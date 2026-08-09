@@ -48,12 +48,13 @@ func run(args []string) error {
 	}
 
 	store := state.NewStore()
+	refresher := state.NewRefresher(git.NewExecRunner(gitPath), store, cfg.Workers)
 
 	if cfg.List {
 		return listRepos(cfg, gitPath)
 	}
 
-	return ui.Run(context.Background(), cfg, store, gitPath)
+	return ui.Run(context.Background(), cfg, store, refresher)
 }
 
 // listRepos implements the headless --list mode: print canonical repo paths,

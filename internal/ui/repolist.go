@@ -19,11 +19,28 @@ type scanDoneMsg struct {
 	status string
 }
 
+// refreshDoneMsg reports a completed full refresh.
+type refreshDoneMsg struct {
+	status string
+}
+
+// storeEventMsg bridges one state-store event into the tea loop.
+type storeEventMsg struct {
+	e state.Event
+}
+
+// pollTickMsg fires on the configured refresh.poll_interval_ms cadence.
+type pollTickMsg struct{}
+
 // scanCmd runs the discovery scan on a worker and upserts repos into the
 // store (docs/design/01-architecture.md §5).
-func scanCmd(cfg *config.Config, store *state.Store, gitPath string) tea.Cmd {
+func scanCmd(cfg *config.Config, store *state.Store, refresher *state.Refresher) tea.Cmd {
 	return func() tea.Msg {
 		ctx := context.Background()
+		gitPath, err := git.LookPath()
+		if err != nil {
+			return scanDoneMsg{status: "scan error: " + err.Error()}
+		}
 		roots := discover.Roots(cfg.Home, cfg.ScanRoots, cfg.Discover.ScanRoots, cfg.Discover.ScanHome && !cfg.NoScan)
 		if cfg.NoScan {
 			roots = nil
@@ -108,7 +125,7 @@ func (i repoItem) Title() string       { return renderRepoRow(i.repo) }
 func (i repoItem) Description() string { return i.repo.GitDir }
 func (i repoItem) FilterValue() string { return i.repo.Name + " " + i.repo.GitDir }
 
-// renderRepoRow builds: [icon] name  branch  ↑2↓1  ~3 +1  (2 worktrees)
+// renderRepoRow builds: [icon] name  branch  ↑2↓1  ~3 +1  (N wt)
 func renderRepoRow(r *model.Repo) string {
 	var s string
 
@@ -155,6 +172,25 @@ func renderRepoRow(r *model.Repo) string {
 		s += " " + dimStyle.Render("("+itoa(n)+" wt)")
 	}
 	return s
+}
+
+// itemsFromStore renders the store's repos as list items.
+func itemsFromStore(s *state.Store) []list.Item {
+	repos := s.List()
+	items := make([]list.Item, 0, len(repos))
+	for _, r := range repos {
+		items = append(items, repoItem{repo: r})
+	}
+	return items
+}
+
+func indexOfID(items []list.Item, id string) int {
+	for i, it := range items {
+		if r, ok := it.(repoItem); ok && r.repo.ID == id {
+			return i
+		}
+	}
+	return 0
 }
 
 func newRepoItemDelegate() list.ItemDelegate {
