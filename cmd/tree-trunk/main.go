@@ -34,6 +34,13 @@ func run(args []string) error {
 		fmt.Printf("tree-trunk %s\n", version)
 		return nil
 	}
+	// Hidden-ish subcommand: tree-trunk completion zsh|bash (M4 backlog).
+	if len(args) > 0 && args[0] == "completion" {
+		if len(args) < 2 {
+			return fmt.Errorf("usage: tree-trunk completion zsh|bash")
+		}
+		return printCompletions(args[1])
+	}
 	if err := config.Load(cfg); err != nil {
 		return err
 	}

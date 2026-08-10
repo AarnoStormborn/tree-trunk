@@ -4,23 +4,44 @@
 create and delete git worktrees, and inspect status / log / diff against each
 repo's main branch, all in one terminal session.
 
-> **Status: M4 complete (M0–M4).** Discovery, config, git layer, live per-repo
-> status refresh (deduped, sequenced), the split-pane TUI (repo list +
-> status + worktrees + log + diff), **worktree management** (create/delete
-> with two-step safety, lock/unlock, prune), **log/diff inspection**, and
-> **polish** (filterable cheatsheet, theming, toasts, recent repos,
-> fullscreen) all work. See [`docs/`](docs/) for the full research and design.
+> **Status: M0–M5 complete.** Discovery, config, git layer, live per-repo status
+> refresh (deduped, sequenced), the split-pane TUI (repo list + status +
+> worktrees + log + diff), **worktree management** (create/delete with
+> two-step safety, lock/unlock, prune), **log/diff inspection**, **polish**
+> (cheatsheet, theming, toasts, recent repos, fullscreen), and **hardening**
+> (CI matrix incl. git 2.38, leak checks, cross-compile, release flow). See
+> [`docs/`](docs/) for the full research and design.
 
 ## Install & run
 
-Requires **Go 1.26+** and **git ≥ 2.38** on PATH.
+Requires **git ≥ 2.38** on PATH.
 
 ```sh
-go build -o tree-trunk ./cmd/tree-trunk
-./tree-trunk                 # scan $HOME and open the TUI
-./tree-trunk --list          # headless: print repo paths, one per line
-./tree-trunk --repo ~/a --repo ~/b --no-scan   # explicit repos only
-./tree-trunk --scan-root ~/src                   # scan a specific root
+go install github.com/AarnoStormborn/tree-trunk@latest   # or:
+brew install aarnostormborn/tap/tree-trunk               # once the tap releases
+# or download a binary from the GitHub releases page
+```
+
+```sh
+tree-trunk                    # scan $HOME and open the TUI
+tree-trunk --list             # headless: print repo paths, one per line
+tree-trunk --repo ~/a --repo ~/b --no-scan   # explicit repos only
+tree-trunk --scan-root ~/src                  # scan a specific root
+tree-trunk completion zsh     # shell completion
+```
+
+### Layout
+
+```
+┌ Repos (40%) ──────────────┬ 1 status │ 2 worktrees │ 3 log │ 4 diff ─┐
+│ ✓ myproject   main ↑2↓1   │ On branch main                             │
+│   ├─ worktree feat/x  ~   │ Changes not staged for commit:             │
+│ ~ otherrepo    dev ~3 +1  │   M src/main.go                            │
+│ ↻ bigrepo                 │ Untracked:                                 │
+│ e brokenrepo              │   ?? newfile.go                            │
+├───────────────────────────┴───────────────────────────────────────────┤
+│ [s]tatus [l]og [d]iff [w]orktrees  [n]ew [D]elete  / filter          │
+└ refreshing 3 repos…                                        [↑2↓1]    ┘
 ```
 
 ## What works (M0)
