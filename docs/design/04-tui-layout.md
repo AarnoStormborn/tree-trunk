@@ -7,10 +7,13 @@
 
 **Implemented 2026-08-10 (ui-split): the app is a framed sidebar/main split.**
 Outer rounded frame; header bar (title + version); horizontal rules between
-sections; sidebar (repo list) with its own header, footer, and a right border
-as the vertical boundary; main section with repo header + tab bar + boxed
-content; footer with help + status separated by a rule. Fullscreen (`+/_`)
-hides the sidebar.
+sections; sidebar (repo list) with its own header and a right border that
+spans the full body height as the vertical boundary; main section padded
+away from the boundary, with a repo header + highlighted tab bar (active tab
+has an accent background) + unboxed content; footer with a SINGLE
+context-aware help legend (list vs active tab) + status, separated by rules.
+Fullscreen (`+/_`) hides the sidebar. The bubbles list's built-in help footer
+is disabled so exactly one legend renders.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐

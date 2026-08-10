@@ -1,8 +1,12 @@
 package ui
 
 import (
+	"os"
 	"strings"
 	"testing"
+
+	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 
 	"github.com/AarnoStormborn/tree-trunk/internal/config"
 	"github.com/AarnoStormborn/tree-trunk/internal/model"
@@ -92,6 +96,79 @@ func TestViewWorktreesTab(t *testing.T) {
 		if !strings.Contains(joined, want) {
 			t.Fatalf("worktrees tab missing %q", want)
 		}
+	}
+}
+
+// TestViewBoundaryFullHeight: the sidebar boundary must span every body row.
+func TestViewBoundaryFullHeight(t *testing.T) {
+	m := newTestModel(t)
+	lines := strings.Split(m.View(), "\n")
+	// Body rows run from the header rule down to the footer rule.
+	start, end := -1, -1
+	for i, l := range lines {
+		if strings.HasPrefix(l, "│ ─") && start == -1 {
+			start = i // header rule
+		}
+		if strings.HasPrefix(l, "│ ─") {
+			end = i // last rule (footer separator)
+		}
+	}
+	if start == -1 || end <= start {
+		t.Fatalf("rules not found: start=%d end=%d", start, end)
+	}
+	for i := start + 1; i < end; i++ {
+		if !strings.Contains(lines[i], "│") {
+			t.Fatalf("boundary missing on body row %d: %q", i, lines[i])
+		}
+	}
+}
+
+// TestViewNoContentBox: the main content must NOT be boxed (only the app
+// frame's own top/bottom corners may contain ╭/╰).
+func TestViewNoContentBox(t *testing.T) {
+	m := newTestModel(t)
+	lines := strings.Split(m.View(), "\n")
+	for i, l := range lines {
+		if i == 0 || i == len(lines)-1 {
+			continue // app frame corners
+		}
+		if strings.Contains(l, "╭") || strings.Contains(l, "╰") {
+			t.Fatalf("content box boundary found on row %d: %q", i, l)
+		}
+	}
+}
+
+// TestViewSingleLegend: exactly one help legend in the footer.
+func TestViewSingleLegend(t *testing.T) {
+	m := newTestModel(t)
+	lines := strings.Split(m.View(), "\n")
+	count := 0
+	for _, l := range lines {
+		if strings.Contains(l, "q quit") {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Fatalf("expected exactly one legend containing 'q quit', found %d", count)
+	}
+}
+
+// TestViewActiveTabHighlighted: the active tab renders with a background
+// (termenv forced to ANSI256 so colors are emitted even without a TTY).
+func TestViewActiveTabHighlighted(t *testing.T) {
+	old := lipgloss.DefaultRenderer()
+	r := lipgloss.NewRenderer(os.Stdout)
+	r.SetColorProfile(termenv.ANSI256)
+	lipgloss.SetDefaultRenderer(r)
+	t.Cleanup(func() { lipgloss.SetDefaultRenderer(old) })
+	initStyles(DefaultTheme(), nil) // rebuild styles with the color renderer
+
+	m := newTestModel(t)
+	m.tab = tabWorktrees
+	m.wt.repo = m.store.Get("/r")
+	v := m.View()
+	if !strings.Contains(v, "\x1b[48") {
+		t.Fatalf("active tab not background-highlighted:\n%s", v)
 	}
 }
 

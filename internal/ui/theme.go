@@ -54,6 +54,7 @@ type styles struct {
 	dimColor    lipgloss.Color
 	accentColor lipgloss.Color
 	borderColor lipgloss.Color
+	tabActiveFg lipgloss.Color
 	conflict    lipgloss.Style
 	staged      lipgloss.Style
 	unstaged    lipgloss.Style
@@ -84,14 +85,18 @@ func buildStyles(t Theme, noColor bool) styles {
 		return s
 	}
 	return styles{
-		dim:       mk(t.Dim),
-		accent:    mk(t.Accent),
-		conflict:  mk(t.Conflict),
-		staged:    mk(t.Clean),
-		unstaged:  mk(t.Dirty),
-		untracked: mk(t.Dim),
-		selColor:  t.Selection,
-		title:     lipgloss.NewStyle().Bold(true),
+		dim:         mk(t.Dim),
+		accent:      mk(t.Accent),
+		dimColor:    t.Dim,
+		accentColor: t.Accent,
+		borderColor: t.Dim,
+		tabActiveFg: lipgloss.Color("0"),
+		conflict:    mk(t.Conflict),
+		staged:      mk(t.Clean),
+		unstaged:    mk(t.Dirty),
+		untracked:   mk(t.Dim),
+		selColor:    t.Selection,
+		title:       lipgloss.NewStyle().Bold(true),
 	}
 }
 
