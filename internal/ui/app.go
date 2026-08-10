@@ -6,6 +6,7 @@ package ui
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/help"
@@ -154,8 +155,9 @@ func newAppModel(cfg *config.Config, store *state.Store, refresher *state.Refres
 
 	l := list.New([]list.Item{}, newRepoItemDelegate(), 0, 0)
 	l.Title = ""
-	l.SetShowStatusBar(true)
-	l.SetShowHelp(false) // one legend only — the app footer (currentHelp)
+	l.SetShowStatusBar(false) // count is shown in the "repos (N)" header
+	l.SetShowHelp(false)      // one legend only — the app footer (currentHelp)
+	l.SetShowTitle(false)
 	l.SetFilteringEnabled(true)
 	l.AdditionalShortHelpKeys = func() []key.Binding {
 		return []key.Binding{m2Keys.Quit, m2Keys.Refresh, m2Keys.Help}
@@ -866,19 +868,19 @@ func (m appModel) renderMain() string {
 			repoBranch = "HEAD"
 		}
 	}
-	head := g.title.Render(repoName) + " " + g.dim.Render(repoBranch)
+	head := g.title.Render(repoName) + "  " + g.dim.Render(repoBranch)
 
-	// Tab bar: consistent tabs, active one highlighted with accent bg.
-	tabs := ""
+	// Tab bar: active tab is a highlighted pill, inactive tabs dim; tabs
+	// separated by a gap for breathing room.
+	var tabParts []string
 	for i, name := range []string{"status", "worktrees", "log", "diff"} {
-		style := lipgloss.NewStyle().Padding(0, 1).MarginRight(1)
 		if i == m.tab {
-			style = style.Bold(true).Foreground(g.tabActiveFg).Background(g.accentColor)
+			tabParts = append(tabParts, g.tabActive.Render(name))
 		} else {
-			style = style.Foreground(g.dimColor)
+			tabParts = append(tabParts, g.tabInactive.Render(name))
 		}
-		tabs += style.Render(name)
 	}
+	tabs := strings.Join(tabParts, " ")
 
 	content := ""
 	switch m.tab {
@@ -892,7 +894,9 @@ func (m appModel) renderMain() string {
 		content = m.diff.render()
 	}
 
-	return head + "\n" + tabs + "\n" + content
+	// Blank lines add vertical breathing room: after the repo header and
+	// after the tab bar.
+	return head + "\n\n" + tabs + "\n\n" + content
 }
 
 // renderFooter is the help + status area with a horizontal rule between.

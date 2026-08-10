@@ -2,9 +2,12 @@ package ui
 
 import (
 	"context"
+	"fmt"
+	"io"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/AarnoStormborn/tree-trunk/internal/config"
 	"github.com/AarnoStormborn/tree-trunk/internal/discover"
@@ -228,8 +231,41 @@ func indexOfID(items []list.Item, id string) int {
 	return 0
 }
 
+// repoDelegate is a compact, well-spaced list delegate for repo + worktree
+// rows: one content line + a dim path line, with a blank line between items
+// and an accent bar marking the selection. Replaces the stock delegate's
+// noisy chrome (status bar, filled cursor block).
+type repoDelegate struct{}
+
+func (repoDelegate) Height() int                         { return 2 }
+func (repoDelegate) Spacing() int                        { return 1 }
+func (repoDelegate) Update(tea.Msg, *list.Model) tea.Cmd { return nil }
+
+func (d repoDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
+	selected := index == m.Index()
+
+	var title, path string
+	switch it := item.(type) {
+	case repoItem:
+		title = renderRepoRow(it.repo)
+		path = shortPath(it.repo.GitDir)
+	case worktreeItem:
+		title = it.Title()
+		path = shortPath(it.wt.Path)
+	default:
+		return
+	}
+
+	bar := "  "
+	if selected {
+		bar = g.selBar.Render("▎") + " "
+		title = lipgloss.NewStyle().Bold(true).Render(title)
+	}
+	fmt.Fprint(w, bar+title+"\n"+"  "+g.dim.Render(path))
+}
+
 func newRepoItemDelegate() list.ItemDelegate {
-	return list.NewDefaultDelegate()
+	return repoDelegate{}
 }
 
 // worktreeIndex returns the index of the worktree with the given path, or 0.
