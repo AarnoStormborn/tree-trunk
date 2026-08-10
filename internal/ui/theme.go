@@ -18,6 +18,7 @@ type Theme struct {
 	Clean         lipgloss.Color
 	WorktreeChild lipgloss.Color
 	Selection     lipgloss.Color // background for the focused row
+	DiffHunk      lipgloss.Color // @@ hunk-header color
 }
 
 // DefaultTheme is the built-in palette (dark-first; light variant swaps a
@@ -32,6 +33,7 @@ func DefaultTheme() Theme {
 		Clean:         lipgloss.Color("34"),
 		WorktreeChild: lipgloss.Color("110"),
 		Selection:     lipgloss.Color("237"),
+		DiffHunk:      lipgloss.Color("44"),
 	}
 }
 
@@ -61,6 +63,14 @@ type styles struct {
 	untracked   lipgloss.Style
 	selColor    lipgloss.Color // selection background color
 	title       lipgloss.Style
+
+	diffAdd     lipgloss.Style
+	diffDel     lipgloss.Style
+	diffHunk    lipgloss.Style
+	diffHeader  lipgloss.Style
+	tabActive   lipgloss.Style
+	tabInactive lipgloss.Style
+	selBar      lipgloss.Style
 }
 
 // palette keys accepted in theme.overrides (09-config.md §1).
@@ -97,7 +107,27 @@ func buildStyles(t Theme, noColor bool) styles {
 		untracked:   mk(t.Dim),
 		selColor:    t.Selection,
 		title:       lipgloss.NewStyle().Bold(true),
+
+		diffAdd:    mk(t.Clean),
+		diffDel:    mk(t.Conflict),
+		diffHunk:   mk(t.DiffHunk),
+		diffHeader: lipgloss.NewStyle().Bold(true).Foreground(t.Dim),
+
+		tabActive:   activeTab(t, noColor),
+		tabInactive: mk(t.Dim).Padding(0, 1),
+		selBar:      mk(t.Accent),
 	}
+}
+
+// activeTab is the highlighted tab pill (accent background, dark bold text).
+func activeTab(t Theme, noColor bool) lipgloss.Style {
+	s := lipgloss.NewStyle().Bold(true).Padding(0, 1)
+	if !noColor {
+		s = s.Background(t.Accent).Foreground(lipgloss.Color("0"))
+	} else {
+		s = s.Reverse(true)
+	}
+	return s
 }
 
 // applyOverrides mutates a theme from theme.overrides hex colors.

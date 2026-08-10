@@ -160,7 +160,10 @@ func TestViewActiveTabHighlighted(t *testing.T) {
 	r := lipgloss.NewRenderer(os.Stdout)
 	r.SetColorProfile(termenv.ANSI256)
 	lipgloss.SetDefaultRenderer(r)
-	t.Cleanup(func() { lipgloss.SetDefaultRenderer(old) })
+	t.Cleanup(func() {
+		lipgloss.SetDefaultRenderer(old)
+		initStyles(DefaultTheme(), nil) // restore no-color global styles for other tests
+	})
 	initStyles(DefaultTheme(), nil) // rebuild styles with the color renderer
 
 	m := newTestModel(t)

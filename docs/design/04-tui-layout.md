@@ -15,6 +15,14 @@ context-aware help legend (list vs active tab) + status, separated by rules.
 Fullscreen (`+/_`) hides the sidebar. The bubbles list's built-in help footer
 is disabled so exactly one legend renders.
 
+**UI polish (2026-08-11):** a custom compact list delegate replaces the stock
+one (removes the "N items" status bar / cursor block, gives one content line
++ a dim path line with blank-line spacing and an accent `▎` selection bar);
+the active tab is a highlighted pill (accent background, dark bold text);
+diffs are colorized (green additions, red deletions, cyan `@@` hunks, dim
+file headers); blank lines separate the repo header, tab bar, and content for
+breathing room.
+
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 │ tree-trunk                                                      v0.1.0  │  ← header

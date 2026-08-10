@@ -133,9 +133,41 @@ func (v *diffView) render() string {
 	case v.content == "":
 		body = g.dim.Render("(no diff)")
 	default:
-		body = v.content
+		body = colorizeDiff(v.content)
 	}
 	return head.String() + "\n" + body
+}
+
+// colorizeDiff applies syntax highlighting to unified-diff output: green for
+// additions, red for deletions, cyan for hunk headers, bold-dim for file
+// headers (04-tui-layout §5.3).
+func colorizeDiff(s string) string {
+	if s == "" {
+		return s
+	}
+	lines := strings.Split(s, "\n")
+	var b strings.Builder
+	for i, line := range lines {
+		switch {
+		case strings.HasPrefix(line, "@@"):
+			b.WriteString(g.diffHunk.Render(line))
+		case strings.HasPrefix(line, "+++"), strings.HasPrefix(line, "---"),
+			strings.HasPrefix(line, "diff "), strings.HasPrefix(line, "index "),
+			strings.HasPrefix(line, "new file"), strings.HasPrefix(line, "deleted file"),
+			strings.HasPrefix(line, "rename "), strings.HasPrefix(line, "similarity "):
+			b.WriteString(g.diffHeader.Render(line))
+		case strings.HasPrefix(line, "+"):
+			b.WriteString(g.diffAdd.Render(line))
+		case strings.HasPrefix(line, "-"):
+			b.WriteString(g.diffDel.Render(line))
+		default:
+			b.WriteString(line)
+		}
+		if i < len(lines)-1 {
+			b.WriteString("\n")
+		}
+	}
+	return b.String()
 }
 
 // diffCmd fetches the diff for the current selection (single-flight:
