@@ -54,7 +54,7 @@ func run(args []string) error {
 		return listRepos(cfg, gitPath)
 	}
 
-	return ui.Run(context.Background(), cfg, store, refresher)
+	return ui.Run(context.Background(), cfg, store, refresher, version)
 }
 
 // listRepos implements the headless --list mode: print canonical repo paths,

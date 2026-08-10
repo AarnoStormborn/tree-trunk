@@ -5,11 +5,31 @@
 
 ## 1. Layout
 
+**Implemented 2026-08-10 (ui-split): the app is a framed sidebar/main split.**
+Outer rounded frame; header bar (title + version); horizontal rules between
+sections; sidebar (repo list) with its own header, footer, and a right border
+as the vertical boundary; main section with repo header + tab bar + boxed
+content; footer with help + status separated by a rule. Fullscreen (`+/_`)
+hides the sidebar.
+
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ tree-trunk                                    [1/42 repos]        ? help │  ← header (title, counts, mode)
+│ tree-trunk                                                      v0.1.0  │  ← header
 ├───────────────────────────────┬──────────────────────────────────────────┤
-│  Repos                (40%)   │  Status │ Log │ Diff │ Worktrees  (60%)  │  ← tab bar (inside main pane)
+│ repos (21)                    │ repo·main                                │  ← pane headers
+│ ✓ myproject   main ↑2↓1       │ status │ worktrees │ log │ diff         │  ← tab bar
+│   ├─ worktree feat/x  ~       │ ┌──────────────────────────────────────┐ │
+│ ~ otherrepo    dev ~3 +1      │ │ content (boxed)                      │ │
+│ ↻ bigrepo                     │ └──────────────────────────────────────┘ │
+│ e brokenrepo                  │                                          │
+│                               │                                          │
+│ j/k move · / filter · l expand│                                          │
+├───────────────────────────────┴──────────────────────────────────────────┤
+│ [s]tatus [l]og [d]iff [w]orktrees  [n]ew worktree [D]elete  / filter   │ ← help
+├──────────────────────────────────────────────────────────────────────────┤
+│ refreshing 3 repos…                                        [↑2↓1]      │ ← status
+└──────────────────────────────────────────────────────────────────────────┘
+```
 │ ┌───────────────────────────┐ │ ┌──────────────────────────────────────┐ │
 │ │ ✓ myproject   main ↑2↓1   │ │ │  On branch main                       │ │
 │ │   ├─ worktree feat/x      │ │ │  Your branch is up to date…           │ │
