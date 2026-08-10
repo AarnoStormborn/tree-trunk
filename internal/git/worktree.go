@@ -124,9 +124,11 @@ func AddWorktree(ctx context.Context, r Runner, dir string, opts AddOptions) err
 	}
 	stderr := err.Error()
 	switch {
-	case strings.Contains(stderr, "is already checked out at"):
+	case strings.Contains(stderr, "is already checked out at") ||
+		strings.Contains(stderr, "already used by worktree") ||
+		strings.Contains(stderr, "already checked out"):
 		return &BranchCheckedOutElsewhereError{Branch: branch}
-	case strings.Contains(stderr, "branch named"+branch+"already exists"):
+	case strings.Contains(stderr, "branch named") && strings.Contains(stderr, "already exists"):
 		return &BranchExistsError{Branch: branch}
 	}
 	return err
