@@ -1,0 +1,70 @@
+name: ci
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        git: [system]
+        include:
+          - os: ubuntu-latest
+            git: "2.38" # oldest supported (D1/Q2) — built from source
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.x"
+
+      # Build git 2.38 from source for the min-version leg (03-git-layer §8).
+      - name: Build git ${{ matrix.git }}
+        if: matrix.git == '2.38'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential gettext libssl-dev \
+            zlib1g-dev libcurl4-openssl-dev libexpat1-dev
+          git clone --branch v2.38.0 --depth 1 \
+            https://github.com/git/git.git /tmp/git-src
+          make -C /tmp/git-src prefix=/opt/git-2.38 -j2 all
+          sudo make -C /tmp/git-src prefix=/opt/git-2.38 install
+          echo "/opt/git-2.38/bin" >> "$GITHUB_PATH"
+
+      - name: Verify git version
+        run: git --version
+
+      - name: Vet + fmt
+        run: |
+          go vet ./...
+          test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
+
+      - name: Test (with race detector)
+        run: go test -race ./...
+
+  cross-compile:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [darwin, linux]
+        goarch: [amd64, arm64]
+        include:
+          - goos: windows # best-effort (D6)
+            goarch: amd64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.x"
+      - name: Build for ${{ matrix.goos }}/${{ matrix.goarch }}
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: "0"
+        run: go build -o /tmp/tree-trunk-${{ matrix.goos }}-${{ matrix.goarch }} ./cmd/tree-trunk
