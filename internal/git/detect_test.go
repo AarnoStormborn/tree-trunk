@@ -35,10 +35,14 @@ func runGit(t *testing.T, dir string, args ...string) string {
 }
 
 // newSandboxRepo creates a repo with one commit and returns its main path.
+// A repo-local identity is configured because CI runners have no global
+// git user.name/email (commits would fail with exit 128).
 func newSandboxRepo(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
 	runGit(t, dir, "init", "-b", "main", ".")
+	runGit(t, dir, "config", "user.name", "tree-trunk test")
+	runGit(t, dir, "config", "user.email", "test@example.com")
 	if err := os.WriteFile(filepath.Join(dir, "file.txt"), []byte("hello\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}

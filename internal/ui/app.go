@@ -143,6 +143,7 @@ type appModel struct {
 	toast      string
 	toastUntil time.Time
 	appState   stateFile
+	bodyH      int
 }
 
 // New returns the root model.
@@ -152,8 +153,9 @@ func newAppModel(cfg *config.Config, store *state.Store, refresher *state.Refres
 	sp.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 
 	l := list.New([]list.Item{}, newRepoItemDelegate(), 0, 0)
-	l.Title = "repos"
+	l.Title = ""
 	l.SetShowStatusBar(true)
+	l.SetShowHelp(false) // one legend only — the app footer (currentHelp)
 	l.SetFilteringEnabled(true)
 	l.AdditionalShortHelpKeys = func() []key.Binding {
 		return []key.Binding{m2Keys.Quit, m2Keys.Refresh, m2Keys.Help}
@@ -193,7 +195,7 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
 		m.layout()
-		m.help.Width = msg.Width
+		m.help.Width = m.contentWidth()
 		return m, nil
 
 	case tea.KeyMsg:
@@ -779,57 +781,105 @@ func pollTickCmd(intervalMS int) tea.Cmd {
 	}
 }
 
+// View renders the full app frame: header / sidebar+main body / footer
+// (help + status). Visual boundaries: outer rounded frame, horizontal rules
+// between sections, a vertical border between the sidebar and the main
+// section, and a content box inside main.
 func (m appModel) View() string {
 	if m.quit {
 		return ""
 	}
 
-	right := m.renderRight()
+	header := m.renderHeader()
+	body := m.renderBody()
+	footer := m.renderFooter()
 
+	frame := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).Padding(0, 1)
+	if m.width > 0 {
+		frame = frame.Width(m.width - 2) // account for the border columns
+	}
+	return frame.Render(lipgloss.JoinVertical(lipgloss.Left, header, body, footer))
+}
+
+// contentWidth is the usable width inside the app frame (border + padding).
+func (m appModel) contentWidth() int {
+	if m.width <= 0 {
+		return 80
+	}
+	return m.width - 4
+}
+
+// renderHeader is the app title bar: "tree-trunk" + version on the right.
+func (m appModel) renderHeader() string {
+	titleStr := "tree-trunk"
+	title := g.title.Render(titleStr)
+	info := g.dim.Render("v" + appVersion)
+	head := lipgloss.JoinHorizontal(lipgloss.Top,
+		title,
+		lipgloss.NewStyle().Width(m.contentWidth()-len(titleStr)-1).Align(lipgloss.Right).Render(info),
+	)
+	return head + "\n" + hrule(m.contentWidth())
+}
+
+// renderBody splits the screen into the sidebar (repo list) and the main
+// section (tabs + content). Both boxes share the body height so the sidebar
+// boundary spans the full column; the main section is padded away from the
+// boundary.
+func (m appModel) renderBody() string {
 	var body string
 	if m.fullscreen {
-		body = lipgloss.NewStyle().Width(m.rightWidth()).Padding(0, 1).Render(right)
+		body = lipgloss.NewStyle().Width(m.rightWidth()).Height(m.bodyH).Padding(0, 2).Render(m.renderMain())
 	} else {
-		left := m.list.View()
 		body = lipgloss.JoinHorizontal(lipgloss.Top,
-			lipgloss.NewStyle().Width(m.leftWidth()).Padding(0, 1).Render(left),
-			lipgloss.NewStyle().Width(m.rightWidth()).Padding(0, 1).BorderLeft(true).Render(right),
+			lipgloss.NewStyle().Width(m.leftWidth()).Height(m.bodyH).
+				BorderRight(true).BorderStyle(lipgloss.NormalBorder()).BorderForeground(g.borderColor).
+				Padding(0, 1).
+				Render(m.renderSidebar()),
+			lipgloss.NewStyle().Width(m.rightWidth()).Height(m.bodyH).Padding(0, 2).Render(m.renderMain()),
 		)
 	}
 
 	// Modal overlay on top of the split.
 	if m.modal != nil {
-		overlay := m.modal.render(m.width)
-		body = overlay
+		body = m.modal.render(m.width)
 	}
-
-	var statusLine string
-	if m.scanning {
-		statusLine = g.dim.Render(m.statusText)
-	} else {
-		statusLine = m.statusText
-	}
-
-	helpLine := m.help.View(m2Keys)
-	status := lipgloss.NewStyle().Padding(0, 1).Render(statusLine)
-
-	return lipgloss.JoinVertical(lipgloss.Left,
-		body,
-		helpLine,
-		status,
-	)
+	return body
 }
 
-func (m appModel) renderRight() string {
-	// Tab bar.
+// renderSidebar is the repo list pane with its own header.
+func (m appModel) renderSidebar() string {
+	n := len(m.store.List())
+	head := g.title.Render("repos") + " " + g.dim.Render("("+itoa(n)+")")
+	listView := m.list.View()
+	return head + "\n" + listView
+}
+
+// renderMain is the tabbed content section with a repo header and an
+// unpadded content area (no boxed boundary).
+func (m appModel) renderMain() string {
+	repoName := "—"
+	repoBranch := ""
+	if r := m.store.Get(m.selectedID); r != nil {
+		repoName = r.Name
+		repoBranch = r.Branch
+		if repoBranch == "" {
+			repoBranch = "HEAD"
+		}
+	}
+	head := g.title.Render(repoName) + " " + g.dim.Render(repoBranch)
+
+	// Tab bar: consistent tabs, active one highlighted with accent bg.
 	tabs := ""
-	for i, name := range []string{"1 status", "2 worktrees", "3 log", "4 diff"} {
-		style := lipgloss.NewStyle().Padding(0, 1)
+	for i, name := range []string{"status", "worktrees", "log", "diff"} {
+		style := lipgloss.NewStyle().Padding(0, 1).MarginRight(1)
 		if i == m.tab {
-			style = style.Bold(true).Underline(true)
+			style = style.Bold(true).Foreground(g.tabActiveFg).Background(g.accentColor)
+		} else {
+			style = style.Foreground(g.dimColor)
 		}
 		tabs += style.Render(name)
 	}
+
 	content := ""
 	switch m.tab {
 	case tabStatus:
@@ -841,31 +891,94 @@ func (m appModel) renderRight() string {
 	case tabDiff:
 		content = m.diff.render()
 	}
-	return tabs + "\n" + content
+
+	return head + "\n" + tabs + "\n" + content
+}
+
+// renderFooter is the help + status area with a horizontal rule between.
+// The help reflects the CURRENT context (list vs the active tab) — one
+// legend, not two.
+func (m appModel) renderFooter() string {
+	helpLine := m.help.View(m.currentHelp())
+
+	var statusLine string
+	if m.toast != "" && time.Now().Before(m.toastUntil) {
+		statusLine = m.toast
+	} else if m.scanning {
+		statusLine = g.dim.Render(m.statusText)
+	} else {
+		statusLine = m.statusText
+	}
+	status := lipgloss.NewStyle().Padding(0, 1).Render(statusLine)
+
+	return helpLine + "\n" + hrule(m.contentWidth()) + "\n" + status
+}
+
+// currentHelp returns a COMPACT legend for the focused context: the repo
+// list when the sidebar is focused, or the active tab's keys otherwise.
+// One legend only (the sidebar has no legend of its own).
+func (m appModel) currentHelp() contextHelp {
+	glob := []key.Binding{
+		kb("R", "refresh"), kb("?", "help"), kb("q", "quit"),
+	}
+	tabs := kb("1-4/[]", "tabs")
+	if m.listFocused {
+		return contextHelp{keys: append([]key.Binding{
+			kb("j/k", "move"), kb("enter", "focus"), kb("n", "new wt"),
+			kb("d", "delete wt"), kb("L", "lock"), kb("l/→", "expand"),
+			kb("/", "filter"),
+		}, glob...)}
+	}
+	var ctx []key.Binding
+	switch m.tab {
+	case tabStatus:
+		ctx = []key.Binding{kb("j/k", "move"), kb("enter", "file diff"), tabs}
+	case tabWorktrees:
+		ctx = []key.Binding{kb("j/k", "move"), kb("n", "new"), kb("d", "delete"),
+			kb("L", "lock"), kb("P", "prune"), kb("o", "open"), tabs}
+	case tabLog:
+		ctx = []key.Binding{kb("j/k", "move"), kb("enter", "commit diff"),
+			kb("w", "wt from commit"), kb("c", "copy hash"), tabs}
+	case tabDiff:
+		ctx = []key.Binding{kb("j/k", "scroll"), kb("m", "mode"),
+			kb("p", "stat/raw"), kb("c", "copy path"), tabs}
+	}
+	return contextHelp{keys: append(ctx, glob...)}
+}
+
+// kb builds a display-only binding for the legend.
+func kb(keys, help string) key.Binding {
+	return key.NewBinding(key.WithKeys(keys), key.WithHelp(keys, help))
 }
 
 func (m *appModel) layout() {
-	listW := m.leftWidth()
-	statusW := m.rightWidth()
-	m.list.SetSize(listW, m.height-4)
-	m.status.width = statusW
-	m.status.height = m.height - 4
-	m.wt.width = statusW
-	m.wt.height = m.height - 4
-	m.log.list.SetSize(statusW, m.height-5)
-	m.log.width = statusW
-	m.log.height = m.height - 4
-	m.diff.width = statusW
-	m.diff.height = m.height - 5
+	// Frame budget: rounded border (2) + header (2) + footer (3: help,
+	// rule, status).
+	bodyH := m.height - 7
+	if bodyH < 5 {
+		bodyH = 5
+	}
+	m.bodyH = bodyH
+	// Sidebar border (1) + sidebar padding (2) + main padding (4).
+	m.list.SetSize(m.leftWidth()-2, bodyH-2)
+	m.status.width = m.rightWidth() - 4
+	m.status.height = bodyH - 2 // main header + tab bar
+	m.wt.width = m.rightWidth() - 4
+	m.wt.height = bodyH - 2
+	m.log.list.SetSize(m.rightWidth()-4, bodyH-3)
+	m.log.width = m.rightWidth() - 4
+	m.log.height = bodyH - 2
+	m.diff.width = m.rightWidth() - 4
+	m.diff.height = bodyH - 3
 }
 
 func (m *appModel) leftWidth() int {
 	if m.fullscreen || m.width <= 0 {
 		return 0
 	}
-	w := m.width * 40 / 100
-	if w < 20 {
-		w = 20
+	w := m.contentWidth() * 33 / 100
+	if w < 24 {
+		w = 24
 	}
 	return w
 }
@@ -875,11 +988,12 @@ func (m *appModel) rightWidth() int {
 		return 0
 	}
 	if m.fullscreen {
-		return m.width - 1
+		return m.contentWidth()
 	}
-	w := m.width - m.leftWidth() - 1
-	if w < 10 {
-		w = 10
+	// sidebar border (1) + sidebar padding (2) + main padding (4)
+	w := m.contentWidth() - m.leftWidth() - 7
+	if w < 20 {
+		w = 20
 	}
 	return w
 }
@@ -896,8 +1010,14 @@ func refreshAllCmd(cfg *config.Config, store *state.Store, refresher *state.Refr
 	}
 }
 
-// Run starts the bubbletea program.
-func Run(ctx context.Context, cfg *config.Config, store *state.Store, refresher *state.Refresher) error {
+// appVersion is the build version, injected from main at startup.
+var appVersion = "dev"
+
+// Run starts the bubbletea program. version is the build version ("" = dev).
+func Run(ctx context.Context, cfg *config.Config, store *state.Store, refresher *state.Refresher, version string) error {
+	if version != "" {
+		appVersion = version
+	}
 	gitPath, err := git.LookPath()
 	if err != nil {
 		return err
@@ -915,3 +1035,9 @@ func Run(ctx context.Context, cfg *config.Config, store *state.Store, refresher 
 	}
 	return ctx.Err()
 }
+
+// contextHelp adapts a flat binding list to bubbles/help's interface.
+type contextHelp struct{ keys []key.Binding }
+
+func (c contextHelp) ShortHelp() []key.Binding  { return c.keys }
+func (c contextHelp) FullHelp() [][]key.Binding { return [][]key.Binding{c.keys} }

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"os"
+	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -48,14 +49,18 @@ func LightTheme() Theme {
 
 // styles bundles the theme-derived styles used across views.
 type styles struct {
-	dim       lipgloss.Style
-	accent    lipgloss.Style
-	conflict  lipgloss.Style
-	staged    lipgloss.Style
-	unstaged  lipgloss.Style
-	untracked lipgloss.Style
-	selColor  lipgloss.Color // selection background color
-	title     lipgloss.Style
+	dim         lipgloss.Style
+	accent      lipgloss.Style
+	dimColor    lipgloss.Color
+	accentColor lipgloss.Color
+	borderColor lipgloss.Color
+	tabActiveFg lipgloss.Color
+	conflict    lipgloss.Style
+	staged      lipgloss.Style
+	unstaged    lipgloss.Style
+	untracked   lipgloss.Style
+	selColor    lipgloss.Color // selection background color
+	title       lipgloss.Style
 }
 
 // palette keys accepted in theme.overrides (09-config.md §1).
@@ -80,14 +85,18 @@ func buildStyles(t Theme, noColor bool) styles {
 		return s
 	}
 	return styles{
-		dim:       mk(t.Dim),
-		accent:    mk(t.Accent),
-		conflict:  mk(t.Conflict),
-		staged:    mk(t.Clean),
-		unstaged:  mk(t.Dirty),
-		untracked: mk(t.Dim),
-		selColor:  t.Selection,
-		title:     lipgloss.NewStyle().Bold(true),
+		dim:         mk(t.Dim),
+		accent:      mk(t.Accent),
+		dimColor:    t.Dim,
+		accentColor: t.Accent,
+		borderColor: t.Dim,
+		tabActiveFg: lipgloss.Color("0"),
+		conflict:    mk(t.Conflict),
+		staged:      mk(t.Clean),
+		unstaged:    mk(t.Dirty),
+		untracked:   mk(t.Dim),
+		selColor:    t.Selection,
+		title:       lipgloss.NewStyle().Bold(true),
 	}
 }
 
@@ -130,4 +139,13 @@ func initStyles(theme Theme, overrides map[string]string) {
 // newBorder returns a rounded-border style (shared by modals).
 func newBorder() lipgloss.Style {
 	return lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).Padding(0, 2)
+}
+
+// hrule renders a horizontal rule of the given width (used between app
+// sections; lipgloss borders need an explicit content width to render).
+func hrule(width int) string {
+	if width <= 0 {
+		width = 40
+	}
+	return strings.Repeat("─", width)
 }
