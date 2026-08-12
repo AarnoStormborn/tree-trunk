@@ -143,3 +143,39 @@ func TestSideBySideNarrowFallsBack(t *testing.T) {
 		t.Error("narrow width should fall back to unified, not split")
 	}
 }
+
+func TestRenderDiffMultiFile(t *testing.T) {
+	withColor(t)
+	diff := "diff --git a/alpha.go b/alpha.go\n" +
+		"index 1..2 100644\n--- a/alpha.go\n+++ b/alpha.go\n" +
+		"@@ -1 +1 @@\n-old\n+new\n" +
+		"diff --git a/infra.tf b/infra.tf\n" +
+		"new file mode 100644\nindex 0..3\n--- /dev/null\n+++ b/infra.tf\n" +
+		"@@ -0,0 +1 @@\n+created\n"
+	plain := stripANSI(renderDiff(diff))
+
+	// Clean file bars for both files.
+	if !strings.Contains(plain, " alpha.go") || !strings.Contains(plain, " infra.tf") {
+		t.Errorf("file bars missing:\n%s", plain)
+	}
+	// New-file status tag.
+	if !strings.Contains(plain, "new file") {
+		t.Errorf("new-file tag missing:\n%s", plain)
+	}
+	// Git metadata noise is hidden.
+	for _, noise := range []string{"index 1..2", "--- a/alpha.go", "+++ b/alpha.go", "diff --git"} {
+		if strings.Contains(plain, noise) {
+			t.Errorf("metadata leaked into output: %q\n%s", noise, plain)
+		}
+	}
+}
+
+func TestDiffFilePathAndStatus(t *testing.T) {
+	if p := diffFilePath("diff --git a/src/x.go b/src/x.go"); p != "src/x.go" {
+		t.Fatalf("path = %q", p)
+	}
+	lines := []string{"diff --git a/f b/f", "deleted file mode 100644", "@@ -1 +0 @@"}
+	if s := diffFileStatus(lines, 0); s != "deleted" {
+		t.Fatalf("status = %q, want deleted", s)
+	}
+}

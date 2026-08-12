@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/mattn/go-runewidth"
+
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
@@ -24,25 +26,37 @@ func renderDiff(raw string) string {
 	oldNum, newNum := 0, 0
 
 	i := 0
-	firstHunk := true
+	firstFile := true
+	firstHunkInFile := true
 	for i < len(lines) {
 		line := lines[i]
 		switch {
+		case strings.HasPrefix(line, "diff --git "):
+			if !firstFile {
+				out.WriteByte('\n')
+			}
+			out.WriteString(renderFileBar(diffFilePath(line), diffFileStatus(lines, i), 80))
+			out.WriteByte('\n')
+			firstFile = false
+			firstHunkInFile = true
+			i++
+			for i < len(lines) && isDiffMetadata(lines[i]) {
+				i++
+			}
+
 		case strings.HasPrefix(line, "@@"):
 			oldNum, newNum = parseHunkHeader(line)
-			if !firstHunk {
+			if !firstHunkInFile {
 				out.WriteString(gutterBlank() + g.lineNum.Render(strings.Repeat("─", 60)))
 				out.WriteByte('\n')
 			}
-			firstHunk = false
+			firstHunkInFile = false
 			out.WriteString(gutterBlank() + g.diffHunk.Render(line))
 			out.WriteByte('\n')
 			i++
 
-		case isDiffFileHeader(line):
-			out.WriteString(gutterBlank() + g.diffHeader.Render(line))
-			out.WriteByte('\n')
-			i++
+		case isDiffMetadata(line):
+			i++ // stray metadata: hide it
 
 		case strings.HasPrefix(line, "-") && !strings.HasPrefix(line, "---"):
 			// A change block: a run of '-' lines, then a run of '+' lines.
@@ -81,15 +95,6 @@ func parseHunkHeader(line string) (oldNum, newNum int) {
 	o, _ := strconv.Atoi(m[1])
 	n, _ := strconv.Atoi(m[2])
 	return o - 1, n - 1
-}
-
-func isDiffFileHeader(line string) bool {
-	for _, p := range []string{"diff ", "index ", "--- ", "+++ ", "new file", "deleted file", "rename ", "similarity ", "old mode", "new mode", "Binary files"} {
-		if strings.HasPrefix(line, p) {
-			return true
-		}
-	}
-	return false
 }
 
 // collectChangeBlock gathers consecutive '-' lines then consecutive '+'
@@ -202,4 +207,60 @@ func pad(n int) string {
 		return s
 	}
 	return strings.Repeat(" ", 4-len(s)) + s
+}
+
+// --- multi-file helpers (shared by unified + side-by-side) ---
+
+// diffFilePath extracts the new-side path from a "diff --git a/OLD b/NEW"
+// line (best-effort; handles the common unquoted case).
+func diffFilePath(line string) string {
+	rest := strings.TrimPrefix(line, "diff --git ")
+	if i := strings.Index(rest, " b/"); i >= 0 {
+		return rest[i+len(" b/"):]
+	}
+	return strings.TrimSpace(rest)
+}
+
+// diffFileStatus looks ahead from a "diff --git" line for a new/deleted/
+// renamed marker and returns a short tag ("" for a plain modification).
+func diffFileStatus(lines []string, start int) string {
+	for j := start + 1; j < len(lines) && j < start+6; j++ {
+		switch {
+		case strings.HasPrefix(lines[j], "new file"):
+			return "new file"
+		case strings.HasPrefix(lines[j], "deleted file"):
+			return "deleted"
+		case strings.HasPrefix(lines[j], "rename "):
+			return "renamed"
+		case strings.HasPrefix(lines[j], "Binary files"):
+			return "binary"
+		case strings.HasPrefix(lines[j], "@@"), strings.HasPrefix(lines[j], "diff --git"):
+			return ""
+		}
+	}
+	return ""
+}
+
+// isDiffMetadata reports whether a line is git-diff metadata that we hide in
+// favour of the clean file-header bar.
+func isDiffMetadata(line string) bool {
+	for _, p := range []string{"index ", "--- ", "+++ ", "old mode", "new mode", "new file", "deleted file", "similarity ", "rename ", "copy ", "Binary files", "GIT binary"} {
+		if strings.HasPrefix(line, p) {
+			return true
+		}
+	}
+	return false
+}
+
+// renderFileBar renders a full-width file-header bar for the diff.
+func renderFileBar(path, status string, width int) string {
+	label := " " + path
+	if status != "" {
+		label += "  " + status
+	}
+	if width < 1 {
+		width = 1
+	}
+	label = runewidth.Truncate(label, width, "…")
+	return g.diffFileBar.Width(width).Render(label)
 }

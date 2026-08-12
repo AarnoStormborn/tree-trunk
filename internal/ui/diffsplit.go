@@ -43,27 +43,39 @@ func renderDiffSideBySide(raw string, width int) string {
 
 	lines := strings.Split(raw, "\n")
 	oldNum, newNum := 0, 0
-	first := true
+	firstFile := true
+	firstHunkInFile := true
 
 	i := 0
 	for i < len(lines) {
 		line := lines[i]
 		switch {
+		case strings.HasPrefix(line, "diff --git "):
+			if !firstFile {
+				out.WriteByte('\n')
+			}
+			out.WriteString(renderFileBar(diffFilePath(line), diffFileStatus(lines, i), width))
+			out.WriteByte('\n')
+			firstFile = false
+			firstHunkInFile = true
+			i++
+			for i < len(lines) && isDiffMetadata(lines[i]) {
+				i++
+			}
+
 		case strings.HasPrefix(line, "@@"):
 			oldNum, newNum = parseHunkHeader(line)
-			if !first {
+			if !firstHunkInFile {
 				out.WriteString(g.lineNum.Render(strings.Repeat("─", width)))
 				out.WriteByte('\n')
 			}
+			firstHunkInFile = false
 			out.WriteString(g.diffHunk.Render(runewidth.Truncate(line, width, "")))
 			out.WriteByte('\n')
-			first = false
 			i++
 
-		case isDiffFileHeader(line):
-			out.WriteString(g.diffHeader.Render(runewidth.Truncate(line, width, "")))
-			out.WriteByte('\n')
-			i++
+		case isDiffMetadata(line):
+			i++ // stray metadata: hide it
 
 		case (strings.HasPrefix(line, "-") && !strings.HasPrefix(line, "---")),
 			(strings.HasPrefix(line, "+") && !strings.HasPrefix(line, "+++")):
