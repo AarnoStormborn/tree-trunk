@@ -260,7 +260,13 @@ Help cheatsheet (`?`): `?`/`esc` close, `/` filters bindings. Search input
   gutters (old + new), full-line add/remove backgrounds, and **word-level
   intra-line highlighting** (via `go-diff/diffmatchpatch` on paired changed
   lines; skipped for very long/minified lines). Inspired by delta/riff, not a
-  copy. Side-by-side and syntax highlighting are future layers.
+  copy.
+- **Side-by-side (2026-08-12):** `s` toggles a two-column split (old left,
+  new right) with a vertical `│` divider, per-side line-number gutters, and a
+  full-width rule separating each hunk (the section boundaries). Default on
+  for terminals ≥ 100 cols; auto-falls back to unified when narrower.
+  Word-level highlighting stays in the unified view; syntax highlighting is a
+  future layer.
 
 ### 5.4 Worktrees view
 - Table: path, branch, head, **dirty** (review M5), locked (🔒 + reason),

@@ -42,6 +42,7 @@ type keyMap struct {
 	Tab4       key.Binding
 	Mode       key.Binding
 	Stat       key.Binding
+	Split      key.Binding
 	Copy       key.Binding
 	PageDown   key.Binding
 	PageUp     key.Binding
@@ -168,7 +169,7 @@ func newAppModel(cfg *config.Config, store *state.Store, refresher *state.Refres
 
 	return appModel{
 		log:         newLogView(),
-		diff:        diffView{mode: git.DiffWorking},
+		diff:        diffView{mode: git.DiffWorking, sideBySide: true},
 		cfg:         cfg,
 		store:       store,
 		refresher:   refresher,
@@ -454,6 +455,9 @@ func (m *appModel) updateDiff(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case key.Matches(k, m2Keys.Stat):
 		m.diff.stat = !m.diff.stat
 		return m, m.loadDiff()
+	case key.Matches(k, m2Keys.Split):
+		m.diff.sideBySide = !m.diff.sideBySide
+		return m, nil
 	case key.Matches(k, m2Keys.Copy):
 		return m, copyText(m.diff.path)
 	}
@@ -945,7 +949,7 @@ func (m appModel) currentHelp() contextHelp {
 			kb("w", "wt from commit"), kb("c", "copy hash"), tabs}
 	case tabDiff:
 		ctx = []key.Binding{kb("j/k", "scroll"), kb("m", "mode"),
-			kb("p", "stat/raw"), kb("c", "copy path"), tabs}
+			kb("p", "stat/raw"), kb("s", "split"), kb("c", "copy path"), tabs}
 	}
 	return contextHelp{keys: append(ctx, glob...)}
 }
