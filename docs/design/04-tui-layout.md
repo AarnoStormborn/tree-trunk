@@ -256,6 +256,11 @@ Help cheatsheet (`?`): `?`/`esc` close, `/` filters bindings. Search input
   product requirement #4), commit diff.
 - `p` toggles stat summary vs full diff; hunk folding is P1 (v1: stat/raw
   toggle only; review feasibility #2).
+- **Rich rendering (2026-08-12):** unified diffs render with line-number
+  gutters (old + new), full-line add/remove backgrounds, and **word-level
+  intra-line highlighting** (via `go-diff/diffmatchpatch` on paired changed
+  lines; skipped for very long/minified lines). Inspired by delta/riff, not a
+  copy. Side-by-side and syntax highlighting are future layers.
 
 ### 5.4 Worktrees view
 - Table: path, branch, head, **dirty** (review M5), locked (🔒 + reason),

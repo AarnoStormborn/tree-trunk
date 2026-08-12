@@ -132,8 +132,11 @@ func (v *diffView) render() string {
 		body = g.conflict.Render(v.err)
 	case v.content == "":
 		body = g.dim.Render("(no diff)")
-	default:
+	case v.stat:
+		// --stat is a summary, not a unified diff; keep the lighter coloring.
 		body = colorizeDiff(v.content)
+	default:
+		body = renderDiff(v.content)
 	}
 	return head.String() + "\n" + body
 }
