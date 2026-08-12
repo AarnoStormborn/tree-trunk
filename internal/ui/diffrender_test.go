@@ -109,3 +109,37 @@ func stripANSI(s string) string {
 	}
 	return b.String()
 }
+
+func TestRenderSideBySide(t *testing.T) {
+	withColor(t)
+	diff := "@@ -1,3 +1,4 @@\n ctx\n-old line\n+new line\n ctx2\n+added\n@@ -20,1 +21,1 @@\n-tail\n+TAIL\n"
+	out := renderDiffSideBySide(diff, 120)
+	plain := stripANSI(out)
+
+	// Column divider present on content rows.
+	if !strings.Contains(plain, "│") {
+		t.Errorf("column divider missing:\n%s", plain)
+	}
+	// Both old and new content appear.
+	if !strings.Contains(plain, "old line") || !strings.Contains(plain, "new line") {
+		t.Errorf("paired content missing:\n%s", plain)
+	}
+	// Hunk separator rule between the two hunks.
+	if !strings.Contains(plain, strings.Repeat("─", 20)) {
+		t.Errorf("hunk separator rule missing:\n%s", plain)
+	}
+	// Backgrounds (del red 52, add green 22) present.
+	if !strings.Contains(out, "48;5;52") || !strings.Contains(out, "48;5;22") {
+		t.Error("add/remove backgrounds missing in split view")
+	}
+}
+
+func TestSideBySideNarrowFallsBack(t *testing.T) {
+	withColor(t)
+	// Too narrow → falls back to the unified renderer (no column divider row).
+	out := renderDiffSideBySide("@@ -1 +1 @@\n-a\n+b\n", 20)
+	// Unified renderer output has the gutter but not the " │ " column divider.
+	if strings.Contains(stripANSI(out), " │ ") {
+		t.Error("narrow width should fall back to unified, not split")
+	}
+}

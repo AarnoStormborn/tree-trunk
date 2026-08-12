@@ -24,11 +24,17 @@ func renderDiff(raw string) string {
 	oldNum, newNum := 0, 0
 
 	i := 0
+	firstHunk := true
 	for i < len(lines) {
 		line := lines[i]
 		switch {
 		case strings.HasPrefix(line, "@@"):
 			oldNum, newNum = parseHunkHeader(line)
+			if !firstHunk {
+				out.WriteString(gutterBlank() + g.lineNum.Render(strings.Repeat("─", 60)))
+				out.WriteByte('\n')
+			}
+			firstHunk = false
 			out.WriteString(gutterBlank() + g.diffHunk.Render(line))
 			out.WriteByte('\n')
 			i++

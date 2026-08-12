@@ -97,16 +97,17 @@ type logPageMsg struct {
 // diffView renders the Diff tab (04 §5.3): a scrollable viewport with
 // mode/stat toggles (held to stat/raw only per M3 scope).
 type diffView struct {
-	repo     *model.Repo
-	viewport viewport.Model
-	content  string
-	mode     git.DiffMode
-	stat     bool
-	path     string // scoped file ("" = repo-level)
-	loading  bool
-	err      string
-	width    int
-	height   int
+	repo       *model.Repo
+	viewport   viewport.Model
+	content    string
+	mode       git.DiffMode
+	stat       bool
+	path       string // scoped file ("" = repo-level)
+	loading    bool
+	err        string
+	sideBySide bool
+	width      int
+	height     int
 }
 
 func (v *diffView) render() string {
@@ -121,7 +122,10 @@ func (v *diffView) render() string {
 	if v.path != "" {
 		head.WriteString(g.dim.Render("  " + v.path))
 	}
-	head.WriteString(g.dim.Render("   m cycle · p stat/raw"))
+	if v.sideBySide && !v.stat {
+		head.WriteString(g.dim.Render("  [split]"))
+	}
+	head.WriteString(g.dim.Render("   m cycle · p stat/raw · s split"))
 	head.WriteString("\n")
 
 	var body string
@@ -135,6 +139,8 @@ func (v *diffView) render() string {
 	case v.stat:
 		// --stat is a summary, not a unified diff; keep the lighter coloring.
 		body = colorizeDiff(v.content)
+	case v.sideBySide && v.width >= 100:
+		body = renderDiffSideBySide(v.content, v.width)
 	default:
 		body = renderDiff(v.content)
 	}
