@@ -19,6 +19,11 @@ type Theme struct {
 	WorktreeChild lipgloss.Color
 	Selection     lipgloss.Color // background for the focused row
 	DiffHunk      lipgloss.Color // @@ hunk-header color
+	DiffAddBg     lipgloss.Color // added-line background
+	DiffDelBg     lipgloss.Color // removed-line background
+	DiffAddWordBg lipgloss.Color // added intra-line (word) background
+	DiffDelWordBg lipgloss.Color // removed intra-line (word) background
+	LineNum       lipgloss.Color // diff line-number gutter
 }
 
 // DefaultTheme is the built-in palette (dark-first; light variant swaps a
@@ -34,6 +39,11 @@ func DefaultTheme() Theme {
 		WorktreeChild: lipgloss.Color("110"),
 		Selection:     lipgloss.Color("237"),
 		DiffHunk:      lipgloss.Color("44"),
+		DiffAddBg:     lipgloss.Color("22"),  // dark green
+		DiffDelBg:     lipgloss.Color("52"),  // dark red
+		DiffAddWordBg: lipgloss.Color("28"),  // brighter green
+		DiffDelWordBg: lipgloss.Color("88"),  // brighter red
+		LineNum:       lipgloss.Color("240"), // dim gutter
 	}
 }
 
@@ -68,6 +78,11 @@ type styles struct {
 	diffDel     lipgloss.Style
 	diffHunk    lipgloss.Style
 	diffHeader  lipgloss.Style
+	diffAddLine lipgloss.Style
+	diffDelLine lipgloss.Style
+	diffAddWord lipgloss.Style
+	diffDelWord lipgloss.Style
+	lineNum     lipgloss.Style
 	tabActive   lipgloss.Style
 	tabInactive lipgloss.Style
 	selBar      lipgloss.Style
@@ -108,15 +123,29 @@ func buildStyles(t Theme, noColor bool) styles {
 		selColor:    t.Selection,
 		title:       lipgloss.NewStyle().Bold(true),
 
-		diffAdd:    mk(t.Clean),
-		diffDel:    mk(t.Conflict),
-		diffHunk:   mk(t.DiffHunk),
-		diffHeader: lipgloss.NewStyle().Bold(true).Foreground(t.Dim),
+		diffAdd:     mk(t.Clean),
+		diffDel:     mk(t.Conflict),
+		diffHunk:    mk(t.DiffHunk),
+		diffHeader:  lipgloss.NewStyle().Bold(true).Foreground(t.Dim),
+		diffAddLine: bgStyle(t.Clean, t.DiffAddBg, noColor),
+		diffDelLine: bgStyle(t.Conflict, t.DiffDelBg, noColor),
+		diffAddWord: bgStyle(lipgloss.Color("15"), t.DiffAddWordBg, noColor).Bold(true),
+		diffDelWord: bgStyle(lipgloss.Color("15"), t.DiffDelWordBg, noColor).Bold(true),
+		lineNum:     mk(t.LineNum),
 
 		tabActive:   activeTab(t, noColor),
 		tabInactive: mk(t.Dim).Padding(0, 1),
 		selBar:      mk(t.Accent),
 	}
+}
+
+// bgStyle builds a fg+bg style, degrading to plain/reverse under NO_COLOR.
+func bgStyle(fg, bg lipgloss.Color, noColor bool) lipgloss.Style {
+	s := lipgloss.NewStyle()
+	if noColor {
+		return s
+	}
+	return s.Foreground(fg).Background(bg)
 }
 
 // activeTab is the highlighted tab pill (accent background, dark bold text).
