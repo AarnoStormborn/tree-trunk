@@ -267,6 +267,10 @@ Help cheatsheet (`?`): `?`/`esc` close, `/` filters bindings. Search input
   for terminals ≥ 100 cols; auto-falls back to unified when narrower.
   Word-level highlighting stays in the unified view; syntax highlighting is a
   future layer.
+- **Multi-file diffs (2026-08-12):** each file gets a clean full-width
+  header bar (path + a `new file`/`deleted`/`renamed` tag) instead of the
+  raw `diff --git`/`index`/`---`/`+++` metadata, with a blank line between
+  files; hunk-separator rules only appear between hunks *within* a file.
 
 ### 5.4 Worktrees view
 - Table: path, branch, head, **dirty** (review M5), locked (🔒 + reason),

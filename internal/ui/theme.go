@@ -24,6 +24,7 @@ type Theme struct {
 	DiffAddWordBg lipgloss.Color // added intra-line (word) background
 	DiffDelWordBg lipgloss.Color // removed intra-line (word) background
 	LineNum       lipgloss.Color // diff line-number gutter
+	DiffFileBarBg lipgloss.Color // per-file header bar background
 }
 
 // DefaultTheme is the built-in palette (dark-first; light variant swaps a
@@ -44,6 +45,7 @@ func DefaultTheme() Theme {
 		DiffAddWordBg: lipgloss.Color("28"),  // brighter green
 		DiffDelWordBg: lipgloss.Color("88"),  // brighter red
 		LineNum:       lipgloss.Color("240"), // dim gutter
+		DiffFileBarBg: lipgloss.Color("238"), // file header bar
 	}
 }
 
@@ -83,6 +85,7 @@ type styles struct {
 	diffAddWord lipgloss.Style
 	diffDelWord lipgloss.Style
 	lineNum     lipgloss.Style
+	diffFileBar lipgloss.Style
 	tabActive   lipgloss.Style
 	tabInactive lipgloss.Style
 	selBar      lipgloss.Style
@@ -132,11 +135,21 @@ func buildStyles(t Theme, noColor bool) styles {
 		diffAddWord: bgStyle(lipgloss.Color("15"), t.DiffAddWordBg, noColor).Bold(true),
 		diffDelWord: bgStyle(lipgloss.Color("15"), t.DiffDelWordBg, noColor).Bold(true),
 		lineNum:     mk(t.LineNum),
+		diffFileBar: fileBarStyle(t, noColor),
 
 		tabActive:   activeTab(t, noColor),
 		tabInactive: mk(t.Dim).Padding(0, 1),
 		selBar:      mk(t.Accent),
 	}
+}
+
+// fileBarStyle is the per-file header bar in diffs (bold name on a subtle bar).
+func fileBarStyle(t Theme, noColor bool) lipgloss.Style {
+	st := lipgloss.NewStyle().Bold(true)
+	if noColor {
+		return st.Underline(true)
+	}
+	return st.Foreground(lipgloss.Color("252")).Background(t.DiffFileBarBg)
 }
 
 // bgStyle builds a fg+bg style, degrading to plain/reverse under NO_COLOR.
