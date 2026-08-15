@@ -3,6 +3,13 @@
 > Design doc. bubbletea v1.3.x (D2). Layout and interaction patterns adapted
 > from lazygit / lazydocker / herdr (research track 4).
 
+## 0. Startup splash
+
+On launch, a centered wordmark banner (figlet "small" font, accent color) with
+a spinner + "finding your repos…" is shown while the initial scan runs. It is
+dismissed the moment the first repo streams into the store (or the scan
+finishes with none), so on fast local scans it only flashes briefly.
+
 ## 1. Layout
 
 **Implemented 2026-08-10 (ui-split): the app is a framed sidebar/main split.**
