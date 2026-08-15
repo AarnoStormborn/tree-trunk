@@ -141,12 +141,14 @@ type appModel struct {
 	listFocused bool
 	selectedID  string
 
-	fullscreen bool
-	showSplash bool
-	toast      string
-	toastUntil time.Time
-	appState   stateFile
-	bodyH      int
+	fullscreen    bool
+	showSplash    bool
+	splashMinDone bool // minimum splash duration elapsed
+	splashLoaded  bool // first scan result arrived (or scan done)
+	toast         string
+	toastUntil    time.Time
+	appState      stateFile
+	bodyH         int
 }
 
 // New returns the root model.
@@ -192,6 +194,9 @@ func (m appModel) Init() tea.Cmd {
 	if m.cfg.Refresh.PollIntervalMS > 0 {
 		cmds = append(cmds, pollTickCmd(m.cfg.Refresh.PollIntervalMS))
 	}
+	// Keep the splash up for at least a beat so it's actually visible even
+	// when the scan finishes almost instantly.
+	cmds = append(cmds, tea.Tick(splashMinDuration, func(time.Time) tea.Msg { return splashTimerMsg{} }))
 	return tea.Batch(cmds...)
 }
 
@@ -301,7 +306,10 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case scanDoneMsg:
 		m.scanning = false
-		m.showSplash = false
+		m.splashLoaded = true
+		if m.splashMinDone {
+			m.showSplash = false
+		}
 		m.statusText = msg.status
 		items := itemsFromStore(m.store, m.expanded)
 		cmd := m.list.SetItems(items)
@@ -341,6 +349,13 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case toastExpireMsg:
 		m.toast = ""
+		return m, nil
+
+	case splashTimerMsg:
+		m.splashMinDone = true
+		if m.splashLoaded {
+			m.showSplash = false
+		}
 		return m, nil
 
 	case spinner.TickMsg:
@@ -765,8 +780,12 @@ func (m *appModel) handleStoreEvent(e state.Event) tea.Cmd {
 	var cmds []tea.Cmd
 	switch e.Kind {
 	case state.EventRepoAdded, state.EventRepoUpdated, state.EventRefreshFinished:
-		// First repo(s) arriving dismisses the startup splash.
-		m.showSplash = false
+		// First repo(s) arriving marks the splash "loaded"; it hides once
+		// the minimum display time has also elapsed.
+		m.splashLoaded = true
+		if m.splashMinDone {
+			m.showSplash = false
+		}
 		items := itemsFromStore(m.store, m.expanded)
 		// Auto-select the first repo as soon as one streams in.
 		if m.selectedID == "" && len(items) > 0 {

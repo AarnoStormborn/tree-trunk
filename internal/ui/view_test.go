@@ -210,12 +210,18 @@ func TestSplashShownThenDismissed(t *testing.T) {
 		t.Fatal("repo frame should not show during splash")
 	}
 
-	// A repo streaming in dismisses the splash.
+	// A repo arriving before the minimum duration keeps the splash up.
 	store.Upsert(&model.Repo{ID: "/r", Name: "r", Path: "/r", Branch: "main"})
-	mm, _ := m.handleStoreEventForTest(state.Event{Kind: state.EventRepoAdded, RepoID: "/r"})
-	v2 := mm.View()
+	m, _ = m.handleStoreEventForTest(state.Event{Kind: state.EventRepoAdded, RepoID: "/r"})
+	if !strings.Contains(m.View(), "finding your repos") {
+		t.Fatal("splash should stay until the minimum duration elapses")
+	}
+
+	// Once the minimum-duration timer fires, the splash gives way to the app.
+	m2, _ := m.Update(splashTimerMsg{})
+	v2 := m2.(appModel).View()
 	if strings.Contains(v2, "finding your repos") {
-		t.Fatalf("splash not dismissed after first repo:\n%s", v2)
+		t.Fatalf("splash not dismissed after min duration + result:\n%s", v2)
 	}
 	if !strings.Contains(v2, "repos (1)") {
 		t.Fatalf("repo frame missing after dismiss:\n%s", v2)

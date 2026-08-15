@@ -7,8 +7,10 @@
 
 On launch, a centered wordmark banner (figlet "small" font, accent color) with
 a spinner + "finding your repos…" is shown while the initial scan runs. It is
-dismissed the moment the first repo streams into the store (or the scan
-finishes with none), so on fast local scans it only flashes briefly.
+dismissed once BOTH a minimum display time (~1.2s, so it's always visible)
+has elapsed AND the first repo has streamed in (or the scan finished). On a
+fast local scan it shows for the ~1.2s floor; on a large $HOME it lingers
+until results are ready.
 
 ## 1. Layout
 

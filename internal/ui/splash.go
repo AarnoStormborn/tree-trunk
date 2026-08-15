@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"time"
+
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -23,3 +25,10 @@ func (m appModel) renderSplash() string {
 	}
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
+
+// splashMinDuration is the minimum time the startup splash stays up so it's
+// visible even when the scan finishes almost immediately.
+const splashMinDuration = 1200 * time.Millisecond
+
+// splashTimerMsg fires once the minimum splash duration has elapsed.
+type splashTimerMsg struct{}
