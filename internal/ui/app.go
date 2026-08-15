@@ -142,6 +142,7 @@ type appModel struct {
 	selectedID  string
 
 	fullscreen bool
+	showSplash bool
 	toast      string
 	toastUntil time.Time
 	appState   stateFile
@@ -182,6 +183,7 @@ func newAppModel(cfg *config.Config, store *state.Store, refresher *state.Refres
 		expanded:    map[string]bool{},
 		statusText:  "scanning…",
 		listFocused: true,
+		showSplash:  true,
 	}
 }
 
@@ -299,6 +301,7 @@ func (m appModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case scanDoneMsg:
 		m.scanning = false
+		m.showSplash = false
 		m.statusText = msg.status
 		items := itemsFromStore(m.store, m.expanded)
 		cmd := m.list.SetItems(items)
@@ -751,13 +754,28 @@ func (m *appModel) refreshFocused() {
 	m.statusText = "refreshing…"
 }
 
+// handleStoreEventForTest applies a store event and returns the updated
+// model (test helper; handleStoreEvent mutates via pointer receiver).
+func (m appModel) handleStoreEventForTest(e state.Event) (appModel, tea.Cmd) {
+	cmd := m.handleStoreEvent(e)
+	return m, cmd
+}
+
 func (m *appModel) handleStoreEvent(e state.Event) tea.Cmd {
 	var cmds []tea.Cmd
 	switch e.Kind {
-	case state.EventRepoUpdated, state.EventRefreshFinished:
+	case state.EventRepoAdded, state.EventRepoUpdated, state.EventRefreshFinished:
+		// First repo(s) arriving dismisses the startup splash.
+		m.showSplash = false
+		items := itemsFromStore(m.store, m.expanded)
+		// Auto-select the first repo as soon as one streams in.
+		if m.selectedID == "" && len(items) > 0 {
+			if it, ok := items[0].(repoItem); ok {
+				m.selectedID = it.repo.ID
+			}
+		}
 		m.syncSelection()
 		cur := m.selectedID
-		items := itemsFromStore(m.store, m.expanded)
 		cmd := m.list.SetItems(items)
 		cmds = append(cmds, cmd)
 		if cur != "" {
@@ -794,6 +812,9 @@ func pollTickCmd(intervalMS int) tea.Cmd {
 func (m appModel) View() string {
 	if m.quit {
 		return ""
+	}
+	if m.showSplash {
+		return m.renderSplash()
 	}
 
 	header := m.renderHeader()
