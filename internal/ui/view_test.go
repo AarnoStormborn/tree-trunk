@@ -9,6 +9,7 @@ import (
 	"github.com/muesli/termenv"
 
 	"github.com/AarnoStormborn/tree-trunk/internal/config"
+	"github.com/AarnoStormborn/tree-trunk/internal/git"
 	"github.com/AarnoStormborn/tree-trunk/internal/model"
 	"github.com/AarnoStormborn/tree-trunk/internal/state"
 )
@@ -30,6 +31,7 @@ func newTestModel(t *testing.T) appModel {
 	m := newAppModel(&cfg, store, nil, actions)
 	m.selectedID = "/r"
 	m.listFocused = false
+	m.showSplash = false
 	m.tab = tabStatus
 	m.width = 120
 	m.height = 40
@@ -189,4 +191,39 @@ func firstLine(v string) string {
 		return v[:i]
 	}
 	return v
+}
+
+func TestSplashShownThenDismissed(t *testing.T) {
+	cfg := config.Defaults()
+	store := state.NewStore()
+	refresher := state.NewRefresher(git.NewExecRunner("git"), store, 2)
+	actions := newWorktreeActions("git", store)
+	m := newAppModel(&cfg, store, refresher, actions)
+	m.width, m.height = 80, 24
+
+	// Initially: splash with the wordmark, not the repo frame.
+	v := m.View()
+	if !strings.Contains(v, "finding your repos") {
+		t.Fatalf("splash not shown initially:\n%s", v)
+	}
+	if strings.Contains(v, "repos (") {
+		t.Fatal("repo frame should not show during splash")
+	}
+
+	// A repo arriving before the minimum duration keeps the splash up.
+	store.Upsert(&model.Repo{ID: "/r", Name: "r", Path: "/r", Branch: "main"})
+	m, _ = m.handleStoreEventForTest(state.Event{Kind: state.EventRepoAdded, RepoID: "/r"})
+	if !strings.Contains(m.View(), "finding your repos") {
+		t.Fatal("splash should stay until the minimum duration elapses")
+	}
+
+	// Once the minimum-duration timer fires, the splash gives way to the app.
+	m2, _ := m.Update(splashTimerMsg{})
+	v2 := m2.(appModel).View()
+	if strings.Contains(v2, "finding your repos") {
+		t.Fatalf("splash not dismissed after min duration + result:\n%s", v2)
+	}
+	if !strings.Contains(v2, "repos (1)") {
+		t.Fatalf("repo frame missing after dismiss:\n%s", v2)
+	}
 }
