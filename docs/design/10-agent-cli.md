@@ -130,3 +130,21 @@ dirty / locked). Errors structured:
 3. Structured errors + exit codes on mutate.
 4. `wt create/delete/lock/unlock/prune` via CLI.
 5. `--jsonl` streaming; daemon/socket (F5) later if scan latency matters.
+
+## Discovery for agents
+
+An agent that hasn't seen tree-trunk before must be able to find its
+capabilities. We ship three complementary surfaces:
+
+1. **`tree-trunk --help`** — top-level help now lists every subcommand
+   (`query`, `describe`, `completion`) so a shell agent can discover them
+   without reading the repo. `query --help` documents its flags.
+2. **`tree-trunk describe`** — a machine-readable JSON schema of the CLI:
+   `{command, description, version, default, subcommands:[{name, usage, desc,
+   flags:[{name, kind, desc}]}]}`. Agents that can't parse prose help can
+   introspect this at any installed version.
+3. **Man page** (`docs/man/tree-trunk.1`) — classic discovery via
+   `man tree-trunk`, installed automatically by homebrew.
+
+Also available for repo-reading agents: `AGENTS.md` at the repo root (if
+added) and `docs/design/10-agent-cli.md`.

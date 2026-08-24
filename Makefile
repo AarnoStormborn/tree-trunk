@@ -5,7 +5,12 @@ VERSION ?= dev
 GO      ?= go
 LDFLAGS := -s -w -X main.version=$(VERSION)
 
-.PHONY: build test race vet fmt lint cross install bench release-check
+.PHONY: build test race vet fmt lint cross install bench release-check man
+
+# man page (roff) — also installed by goreleaser/homebrew
+man:
+	mkdir -p .man && cp docs/man/tree-trunk.1 .man/
+	@echo "man page staged in .man/"
 
 build:
 	$(GO) build -ldflags "$(LDFLAGS)" -o tree-trunk ./cmd/tree-trunk

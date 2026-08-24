@@ -1,0 +1,94 @@
+.TH TREE-TRUNK 1 "August 2026" "tree-trunk 0.1.0" "User Commands"
+.SH NAME
+tree-trunk \- TUI and CLI for listing git repos and managing worktrees
+.SH SYNOPSIS
+.B tree-trunk
+[\fIflags\fR]
+.br
+.B tree-trunk query
+[\fIflags\fR]
+.br
+.B tree-trunk describe
+.br
+.B tree-trunk completion
+{\fIzsh\fR|\fIbash\fR}
+.SH DESCRIPTION
+.B tree-trunk
+finds every git repository on your machine, shows their status at a glance,
+and lets you manage git worktrees (create, delete, lock, prune) from one
+interactive terminal app.
+.PP
+It shells out to system
+.B git
+(>= 2.38); there is no bundled implementation. The interactive TUI is the
+default; subcommands provide a deterministic, parseable interface for
+scripts and coding agents.
+.SH TUI
+With no arguments,
+.B tree-trunk
+launches an interactive terminal app:
+.TP
+.B Left sidebar
+every repo, its branch and change status. \fBj\fR/\fBk\fR move, \fBl\fR expands worktrees.
+.TP
+.B Main panel
+tabs for the selected repo: \fB1\fR status, \fB2\fR worktrees, \fB3\fR history, \fB4\fR diff.
+.TP
+.B Worktrees
+\fBn\fR create, \fBd\fR delete (double-confirmed, never deletes a branch), \fBL\fR lock/unlock, \fBP\fR prune, \fBo\fR copy path.
+.TP
+.B Diffs
+\fBm\fR cycles working/staged/main, \fBp\fR toggles summary, \fBs\fR toggles side-by-side.
+.PP
+Press \fB?\fR for the full key reference.
+.SH SUBCOMMANDS
+.SS query
+Emit the entire repo/worktree/status picture as a single deterministic JSON
+document. Answer "what's working where, and how much" for an orchestrator.
+.TP
+.B \-\-json
+pretty JSON (default).
+.TP
+.B \-\-filter \fIk=v\fR
+keep repos matching \fIk=v\fR (repeatable, AND-ed). Keys: id, name, branch,
+dirty, prunable, locked, bare, worktrees (count).
+.TP
+.B \-\-fields \fIa,b\fR
+emit only the given top-level fields (repeatable or comma-separated).
+.TP
+.B \-\-repo \fIPATH\fR
+explicit repo path (repeatable).
+.TP
+.B \-\-scan-root \fIROOT\fR
+scan root (repeatable; replaces defaults).
+.TP
+.B \-\-no-scan
+do not scan; use \-\-repo only.
+.PP
+Each repo has a stable \fIid\fR (the canonical git dir), its worktrees
+(path, branch, is_main, locked, prunable, dirty), and status (branch, ahead,
+behind, per-file entries with a porcelain \fIcode\fR).
+.SS describe
+Print a self-describing JSON schema of this CLI: the subcommands, their
+flags, and the output documents. Useful for agents that cannot parse prose
+help text.
+.SS completion
+.B tree-trunk completion zsh
+or
+.B tree-trunk completion bash
+prints a shell completion script for that shell.
+.SH FILES
+.TP
+.I ~/.config/tree-trunk/config.toml
+optional configuration (scan roots, discovery options, themes).
+.TP
+.I ~/.local/state/tree-trunk/state.json
+recently-opened repos.
+.SH EXIT STATUS
+0 on success; non-zero on error. (A richer exit-code contract for agents is
+planned.)
+.SH SEE ALSO
+.BR git (1),
+.BR git-worktree (1)
+.SH AUTHOR
+Aarno Stormborn and contributors.

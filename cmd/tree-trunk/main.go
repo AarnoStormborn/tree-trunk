@@ -40,6 +40,10 @@ func run(args []string) error {
 	if len(args) > 0 && args[0] == "query" {
 		return runQueryCommand(args[1:])
 	}
+	// tree-trunk describe: emit the machine-readable CLI schema.
+	if len(args) > 0 && args[0] == "describe" {
+		return printDescribe(version)
+	}
 	// Hidden-ish subcommand: tree-trunk completion zsh|bash (M4 backlog).
 	if len(args) > 0 && args[0] == "completion" {
 		if len(args) < 2 {
