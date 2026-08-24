@@ -122,6 +122,58 @@ func rootsPlain(cfg *config.Config) []string {
 	return discover.Roots(cfg.Home, cfg.ScanRoots, cfg.Discover.ScanRoots, cfg.Discover.ScanHome)
 }
 
+// discoverOptions builds discovery options from config.
+func discoverOptions(cfg *config.Config) discover.Options {
+	return discover.Options{
+		Roots:           discover.Roots(cfg.Home, cfg.ScanRoots, cfg.Discover.ScanRoots, cfg.Discover.ScanHome),
+		MaxDepth:        cfg.Discover.MaxDepth,
+		Ignore:          cfg.Discover.Ignore,
+		IncludeBare:     cfg.Discover.IncludeBare,
+		FollowSymlinks:  cfg.Discover.FollowSymlinks,
+		Hidden:          cfg.Discover.HiddenDirs,
+		HiddenPeekDepth: cfg.Discover.HiddenPeekDepth,
+	}
+}
+
+// collectAll runs discovery + explicit repos, resolving each path into the
+// store, then refreshes each repo once (status + worktrees).
+func collectAll(ctx context.Context, cfg *config.Config, runner *git.ExecRunner, store *state.Store) error {
+	collect := func(p string) error {
+		repo, err := git.Resolve(ctx, runner, p)
+		if err != nil {
+			return nil // not a git repo / inaccessible: skip
+		}
+		store.Upsert(repo)
+		return nil
+	}
+	for _, p := range cfg.Repos {
+		if err := collect(p); err != nil {
+			return err
+		}
+	}
+	if !cfg.NoScan {
+		rf0 := state.NewRefresher(runner, store, 1)
+		_ = rf0
+		err := collectScanned(ctx, cfg, runner, store, collect)
+		if err != nil {
+			return err
+		}
+	}
+	rf := state.NewRefresher(runner, store, cfg.Workers)
+	for _, r := range store.List() {
+		rf.RefreshOne(ctx, r.ID)
+	}
+	return nil
+}
+
+// collectScanned runs the discovery scanner, calling collect on each hit.
+func collectScanned(ctx context.Context, cfg *config.Config, runner *git.ExecRunner, store *state.Store, collect func(string) error) error {
+	opts := discoverOptions(cfg)
+	return discover.Scanner(ctx, opts, func(hit discover.Hit) error {
+		return collect(hit.Path)
+	})
+}
+
 // filterRepos keeps repos whose fields match all k=v filters.
 // Supported keys: id, name, branch, dirty, prunable, locked, bare, worktrees.
 func filterRepos(repos []*model.Repo, kvs []string) []*model.Repo {

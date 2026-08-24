@@ -43,6 +43,22 @@ func buildCLISchema(version string) cliSchema {
 				Desc:  "Emit the machine-readable CLI schema (subcommands, flags, output docs).",
 			},
 			{
+				Name:  "wt",
+				Usage: "tree-trunk wt <list|create|delete|lock|unlock|prune> [repo] [branch] [flags]",
+				Desc:  "Manage git worktrees (mutating agent API): list, create, delete, lock, unlock, prune. Reuses guarded git ops; structured errors. Flags may appear before or after positionals.",
+				Flags: []cliFlag{
+					{Name: "json", Kind: "bool", Desc: "emit JSON (default)"},
+					{Name: "force", Kind: "bool", Desc: "delete: bypass dirty check; create: bypass guards"},
+					{Name: "dry-run", Kind: "bool", Desc: "prune: preview without executing"},
+					{Name: "from", Kind: "string", Desc: "create: base commit/branch (default HEAD)"},
+					{Name: "path", Kind: "string", Desc: "create: destination (default ~/.worktrees/<repo>/<slug>)"},
+					{Name: "reason", Kind: "string", Desc: "lock: reason"},
+					{Name: "repo", Kind: "repeatable", Desc: "explicit repo path"},
+					{Name: "scan-root", Kind: "repeatable", Desc: "scan root"},
+					{Name: "no-scan", Kind: "bool", Desc: "do not scan the filesystem"},
+				},
+			},
+			{
 				Name:  "query",
 				Usage: "tree-trunk query [--json] [--filter k=v]... [--fields a,b] [--repo PATH]... [--scan-root ROOT]... [--no-scan]",
 				Desc:  "Emit the repo/worktree/status state as a single JSON document (agent read-API). 'what's working where, and how much'.",

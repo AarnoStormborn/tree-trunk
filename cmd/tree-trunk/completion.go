@@ -34,6 +34,7 @@ _tree-trunk() {
   local -a subcommands
   subcommands=(
     'query[emit repo/worktree/status state as JSON]'
+    'wt[manage worktrees: list create delete lock unlock prune]'
     'describe[emit machine-readable CLI schema]'
     'completion[generate shell completion]'
   )
@@ -42,6 +43,15 @@ _tree-trunk() {
     _arguments -s $subcommands $flags
   else
     case $words[2] in
+      wt)
+        local -a wtops
+        wtops=(list create delete lock unlock prune)
+        if (( CURRENT == 3 )); then
+          _arguments -s '1:op:(list create delete lock unlock prune)'
+        else
+          _arguments -s $flags '--force' '--dry-run' '--reason:reason:' '--from:base:' '--path:dir:_directories'
+        fi
+        ;;
       query)
         local -a qflags
         qflags=(
@@ -71,7 +81,7 @@ _tree-trunk() {
   prev="${COMP_WORDS[COMP_CWORD-1]}"
 
   local flags="--repo --scan-root --no-scan --config --list --version --help"
-  local subcommands="query describe completion"
+  local subcommands="query wt describe completion"
 
   case "$prev" in
     --repo|--config)

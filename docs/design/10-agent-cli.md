@@ -1,6 +1,6 @@
 # 10 — Agent-facing CLI
 
-Status: **in progress** (read-API first; mutate later)
+Status: **done** (read-API + mutating wt API)
 Date: 2026-08-24
 
 ## Motivation
@@ -86,7 +86,7 @@ Emits a single JSON document:
 - Repos sorted by `id`; `--json` is the default (pretty), `--no-json` is the
   compact form (agents may prefer compact).
 
-### Mutate (next iteration): `tree-trunk wt`
+### Mutate: `tree-trunk wt` (implemented)
 
 ```bash
 tree-trunk wt list [--repo]... [--json]
@@ -98,7 +98,9 @@ tree-trunk wt prune <repo> [--dry-run] [--json]
 ```
 
 Reuses the guarded `internal/git` ops (branch-exists / checked-out-elsewhere /
-dirty / locked). Errors structured:
+dirty / locked). **Implemented (2026-08):** flags may appear before or after
+positionals (interleaved parser). Default create path is
+`~/.worktrees/<repo>/<slug>`. Errors structured:
 
 ```json
 { "ok": false, "error": { "code": "branch_checked_out_elsewhere",
@@ -125,11 +127,12 @@ dirty / locked). Errors structured:
 
 ## Build order
 
-1. ✅ Subcommand skeleton + `query --json` (this PR).
-2. `wt list` (read-only cross-repo aggregate).
-3. Structured errors + exit codes on mutate.
-4. `wt create/delete/lock/unlock/prune` via CLI.
-5. `--jsonl` streaming; daemon/socket (F5) later if scan latency matters.
+1. ✅ Subcommand skeleton + `query --json` (PR #11).
+2. ✅ `wt list` (read-only cross-repo aggregate).
+3. ✅ Structured errors on mutate (`wt` ops return `{ok, error:{code,...}}`).
+4. ✅ `wt create/delete/lock/unlock/prune` via CLI (PR #13).
+5. Exit-code contract (0/3/4/5) — still planned.
+6. `--jsonl` streaming; daemon/socket (F5) later if scan latency matters.
 
 ## Discovery for agents
 

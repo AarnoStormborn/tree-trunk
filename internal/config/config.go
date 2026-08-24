@@ -150,12 +150,14 @@ func ParseFlags(args []string) (*Config, *flag.FlagSet, error) {
 Usage:
   tree-trunk [flags]              launch the interactive TUI
   tree-trunk query [flags]        emit repo/worktree/status state as JSON (agent read-API)
+  tree-trunk wt <op> [flags]      manage git worktrees: list create delete lock unlock prune
   tree-trunk describe             emit the machine-readable CLI schema
   tree-trunk completion zsh|bash  print shell completion
 
 Subcommands:
   query     single JSON document of every repo, its worktrees, branch, status
             (see 'tree-trunk query --help'; also AGENTS.md / docs/design/10-agent-cli.md)
+  wt        create/delete/lock/unlock/prune git worktrees (structured JSON errors)
   describe  self-describing schema of this CLI's branches and flags (JSON)
   completion  zsh|bash
 

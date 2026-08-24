@@ -44,6 +44,10 @@ func run(args []string) error {
 	if len(args) > 0 && args[0] == "describe" {
 		return printDescribe(version)
 	}
+	// tree-trunk wt <op>: the mutating worktree API.
+	if len(args) > 0 && args[0] == "wt" {
+		return runWTCommand(args[1:], version)
+	}
 	// Hidden-ish subcommand: tree-trunk completion zsh|bash (M4 backlog).
 	if len(args) > 0 && args[0] == "completion" {
 		if len(args) < 2 {
