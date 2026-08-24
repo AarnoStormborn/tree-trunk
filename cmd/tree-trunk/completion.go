@@ -30,7 +30,34 @@ _tree-trunk() {
     '--version[print version]'
     '--help[show help]'
   )
-  _arguments -s $flags
+
+  local -a subcommands
+  subcommands=(
+    'query[emit repo/worktree/status state as JSON]'
+    'completion[generate shell completion]'
+  )
+
+  if (( CURRENT == 2 )); then
+    _arguments -s $subcommands $flags
+  else
+    case $words[2] in
+      query)
+        local -a qflags
+        qflags=(
+          '--json[pretty JSON output]'
+          '--filter[k=v filter (repeatable)]:k=v'
+          '--fields[only top-level fields]:a,b'
+          '--repo[explicit repo path]:path:_files -/'
+          '--scan-root[scan root]:dir:_directories'
+          '--no-scan[do not scan]'
+        )
+        _arguments -s $qflags
+        ;;
+      *)
+        _arguments -s $flags
+        ;;
+    esac
+  fi
 }
 compdef _tree-trunk tree-trunk
 `
@@ -43,6 +70,7 @@ _tree-trunk() {
   prev="${COMP_WORDS[COMP_CWORD-1]}"
 
   local flags="--repo --scan-root --no-scan --config --list --version --help"
+  local subcommands="query completion"
 
   case "$prev" in
     --repo|--config)
@@ -57,6 +85,8 @@ _tree-trunk() {
 
   if [[ "$cur" == -* ]]; then
     COMPREPLY=( $(compgen -W "$flags" -- "$cur") )
+  elif [[ "$COMP_CWORD" -eq 1 ]]; then
+    COMPREPLY=( $(compgen -W "$subcommands" -- "$cur") )
   fi
   return 0
 }

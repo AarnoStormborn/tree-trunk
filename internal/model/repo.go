@@ -2,7 +2,10 @@
 // See docs/design/02-data-model.md.
 package model
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // RefreshState describes the lifecycle of a repo's data freshness
 // (docs/design/01-architecture.md §3.2).
@@ -19,34 +22,34 @@ const (
 // store. Identity is the canonicalized common git dir (Abs + EvalSymlinks)
 // — see docs/design/02-data-model.md §1.1.
 type Repo struct {
-	ID        string // canonical common git dir (stable key)
-	Name      string // basename of common dir / display name
-	Path      string // main worktree path ("" for bare)
-	GitDir    string // raw common git dir as reported by git
-	Bare      bool
-	Worktrees []Worktree // main first, then linked
-	Branch    string     // main worktree branch; "HEAD" when detached
-	Status    RepoStatus // aggregated from main worktree status
-	RefState  string     // fingerprint for refresh dedup
-	Lifecycle RefreshState
-	LastError error
+	ID        string       `json:"id"`             // canonical common git dir (stable key)
+	Name      string       `json:"name"`           // basename of common dir / display name
+	Path      string       `json:"path,omitempty"` // main worktree path ("" for bare)
+	GitDir    string       `json:"git_dir"`        // raw common git dir as reported by git
+	Bare      bool         `json:"bare"`
+	Worktrees []Worktree   `json:"worktrees,omitempty"` // main first, then linked
+	Branch    string       `json:"branch,omitempty"`    // main worktree branch; "HEAD" when detached
+	Status    RepoStatus   `json:"status"`              // aggregated from main worktree status
+	RefState  string       `json:"-"`                   // fingerprint for refresh dedup
+	Lifecycle RefreshState `json:"-"`                   // not part of the stable agent contract
+	LastError error        `json:"-"`                   // not JSON-serializable
 }
 
 // Worktree is one working tree attached to a Repo.
 // Source of truth: `git worktree list --porcelain -z`
 // (docs/design/03-git-layer.md §4.3).
 type Worktree struct {
-	Path          string // absolute working directory
-	GitDir        string // <.git dir>/worktrees/<name> for linked; common dir for main
-	Branch        string // short branch name, "" when detached
-	IsMain        bool
-	IsCurrent     bool // path matches the cwd tree-trunk was launched from
-	Locked        bool
-	LockReason    string
-	Prunable      bool
-	Head          string // full 40-hex commit hash (shorten at render time)
-	Dirty         bool   // modified/untracked/conflicted files present
-	IsPathMissing bool   // prunable reason is "gitdir file points to non-existent location"
+	Path          string `json:"path"`             // absolute working directory
+	GitDir        string `json:"git_dir"`          // <.git dir>/worktrees/<name> for linked; common dir for main
+	Branch        string `json:"branch,omitempty"` // short branch name, "" when detached
+	IsMain        bool   `json:"is_main"`
+	IsCurrent     bool   `json:"is_current"` // path matches the cwd tree-trunk was launched from
+	Locked        bool   `json:"locked"`
+	LockReason    string `json:"lock_reason,omitempty"`
+	Prunable      bool   `json:"prunable"`
+	Head          string `json:"head,omitempty"`            // full 40-hex commit hash (shorten at render time)
+	Dirty         bool   `json:"dirty"`                     // modified/untracked/conflicted files present
+	IsPathMissing bool   `json:"is_path_missing,omitempty"` // prunable reason is "gitdir file points to non-existent location"
 }
 
 // Branch is one local branch, with upstream tracking when present.
@@ -69,12 +72,42 @@ type Commit struct {
 
 // StatusFile is one entry from `git status --porcelain=v1 -z`
 // (docs/design/03-git-layer.md §4.1).
+// StatusFile is one file entry from `git status --porcelain=v1 -z`.
 type StatusFile struct {
 	// X/Y are the porcelain codes (X: index/staged, Y: worktree).
 	X, Y byte
 	// Path is the file path; OrigPath is set for renames/copies.
 	Path     string
 	OrigPath string
+}
+
+// Code returns the porcelain code as a string for JSON (e.g. "M", "?", "A").
+func (f StatusFile) Code() string {
+	if f.X == ' ' || f.X == 0 {
+		return string(f.Y)
+	}
+	return string(f.X) + string(f.Y)
+}
+
+// MarshalJSON emits a friendly, stable shape for agents.
+func (f StatusFile) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Path      string `json:"path"`
+		OrigPath  string `json:"orig_path,omitempty"`
+		Staged    bool   `json:"staged"`
+		Unstaged  bool   `json:"unstaged"`
+		Untracked bool   `json:"untracked"`
+		Conflict  bool   `json:"conflict"`
+		Code      string `json:"code"` // porcelain XY, e.g. "M", "??", "A"
+	}{
+		Path:      f.Path,
+		OrigPath:  f.OrigPath,
+		Staged:    f.Staged(),
+		Unstaged:  f.Unstaged(),
+		Untracked: f.Untracked(),
+		Conflict:  f.Conflict(),
+		Code:      f.Code(),
+	})
 }
 
 func (f StatusFile) Staged() bool   { return f.X != 0 && f.X != ' ' && f.X != '?' }
@@ -89,16 +122,17 @@ func (f StatusFile) Conflict() bool {
 // RepoStatus is the working-tree state of one worktree
 // (docs/design/02-data-model.md §1.5). Counts are computed at parse time.
 type RepoStatus struct {
-	Branch   string // current branch ("HEAD" when detached)
-	Upstream string // "origin/main" or ""
+	Branch   string `json:"branch,omitempty"`   // current branch ("HEAD" when detached)
+	Upstream string `json:"upstream,omitempty"` // "origin/main" or ""
 
-	Ahead, Behind int // vs upstream
-	Files         []StatusFile
+	Ahead  int          `json:"ahead"` // commits ahead of upstream
+	Behind int          `json:"behind"`
+	Files  []StatusFile `json:"files,omitempty"`
 
-	Staged    int
-	Unstaged  int
-	Untracked int
-	Conflicts int
+	Staged    int `json:"staged"`
+	Unstaged  int `json:"unstaged"`
+	Untracked int `json:"untracked"`
+	Conflicts int `json:"conflicts"`
 }
 
 // Dirty reports whether the status has any changes.
