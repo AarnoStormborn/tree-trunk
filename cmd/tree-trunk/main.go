@@ -34,6 +34,12 @@ func run(args []string) error {
 		fmt.Printf("tree-trunk %s\n", version)
 		return nil
 	}
+	// Subcommands are handled before flag parsing (flag.Parse stops at the
+	// first non-flag argument). Flags for a subcommand follow it, e.g.
+	// `tree-trunk query --json --filter dirty=true`.
+	if len(args) > 0 && args[0] == "query" {
+		return runQueryCommand(args[1:])
+	}
 	// Hidden-ish subcommand: tree-trunk completion zsh|bash (M4 backlog).
 	if len(args) > 0 && args[0] == "completion" {
 		if len(args) < 2 {
