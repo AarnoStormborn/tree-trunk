@@ -34,6 +34,7 @@ _tree-trunk() {
   local -a subcommands
   subcommands=(
     'query[emit repo/worktree/status state as JSON]'
+    'describe[emit machine-readable CLI schema]'
     'completion[generate shell completion]'
   )
 
@@ -70,7 +71,7 @@ _tree-trunk() {
   prev="${COMP_WORDS[COMP_CWORD-1]}"
 
   local flags="--repo --scan-root --no-scan --config --list --version --help"
-  local subcommands="query completion"
+  local subcommands="query describe completion"
 
   case "$prev" in
     --repo|--config)

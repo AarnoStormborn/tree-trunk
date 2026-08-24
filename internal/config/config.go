@@ -145,7 +145,22 @@ func ParseFlags(args []string) (*Config, *flag.FlagSet, error) {
 	fs.BoolVar(&list, "list", false, "headless: print discovered repo paths, one per line")
 	fs.BoolVar(&showVersion, "version", false, "print version and exit")
 	fs.Usage = func() {
-		fmt.Fprintf(fs.Output(), "tree-trunk — TUI for git repos & worktrees\n\nUsage:\n  tree-trunk [flags]\n\nFlags:\n")
+		fmt.Fprintf(fs.Output(), `tree-trunk — TUI for git repos & worktrees
+
+Usage:
+  tree-trunk [flags]              launch the interactive TUI
+  tree-trunk query [flags]        emit repo/worktree/status state as JSON (agent read-API)
+  tree-trunk describe             emit the machine-readable CLI schema
+  tree-trunk completion zsh|bash  print shell completion
+
+Subcommands:
+  query     single JSON document of every repo, its worktrees, branch, status
+            (see 'tree-trunk query --help'; also AGENTS.md / docs/design/10-agent-cli.md)
+  describe  self-describing schema of this CLI's branches and flags (JSON)
+  completion  zsh|bash
+
+Flags:
+`)
 		fs.PrintDefaults()
 	}
 	if err := fs.Parse(args); err != nil {

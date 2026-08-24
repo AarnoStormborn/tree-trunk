@@ -35,6 +35,10 @@ archives:
     format_overrides:
       - goos: windows
         formats: [zip]
+    files:
+      - src: docs/man/tree-trunk.1
+        dst: tree-trunk.1
+        strip_parent: true
 
 checksum:
   name_template: "checksums.txt"
