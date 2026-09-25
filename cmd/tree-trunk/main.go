@@ -3,6 +3,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"flag"
 	"fmt"
 	"os"
 
@@ -17,15 +19,45 @@ var version = "0.1.0-dev" // overridden at release build time
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
-		fmt.Fprintln(os.Stderr, "tree-trunk:", err)
-		os.Exit(1)
+		var ec exitCoder
+		switch {
+		// Commands that already reported on stdout (the `wt` JSON envelope)
+		// pick their own exit code and print nothing more.
+		case errors.As(err, &ec):
+			os.Exit(ec.ExitCode())
+		// --help/-h is a successful request, not a failure.
+		case errors.Is(err, flag.ErrHelp):
+			os.Exit(0)
+		default:
+			fmt.Fprintln(os.Stderr, "tree-trunk:", err)
+			os.Exit(1)
+		}
 	}
 }
+
+// exitCoder lets a command choose the process exit code instead of the
+// default 1. Exit codes are part of the agent contract
+// (docs/design/10-agent-cli.md §Exit codes): 0 ok, 1 usage/IO, 3 not-found,
+// 4 dirty-blocked, 5 locked.
+type exitCoder interface{ ExitCode() int }
+
+// codedError carries an exit code for an error whose message was already
+// written to stdout, so main does not duplicate it on stderr.
+type codedError struct {
+	code int
+	err  error
+}
+
+func (e *codedError) Error() string { return e.err.Error() }
+
+// ExitCode implements exitCoder.
+func (e *codedError) ExitCode() int { return e.code }
 
 func run(args []string) error {
 	cfg, _, err := config.ParseFlags(args)
 	if err != nil {
-		if err.Error() == "flag: help requested" {
+		// -h/--help on the top-level flags is not an error.
+		if errors.Is(err, flag.ErrHelp) {
 			return nil
 		}
 		return err

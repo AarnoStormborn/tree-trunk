@@ -9,11 +9,12 @@ import (
 // Agents that cannot parse prose --help can introspect this to discover the
 // subcommmands, their flags, and the read-API output schema.
 type cliSchema struct {
-	Command     string   `json:"command"`
-	Description string   `json:"description"`
-	Version     string   `json:"version"`
-	Default     string   `json:"default"` // what `tree-trunk` with no args does
-	Subcommands []subCmd `json:"subcommands"`
+	Command     string            `json:"command"`
+	Description string            `json:"description"`
+	Version     string            `json:"version"`
+	Default     string            `json:"default"` // what `tree-trunk` with no args does
+	ExitCodes   map[string]string `json:"exit_codes"`
+	Subcommands []subCmd          `json:"subcommands"`
 }
 
 type subCmd struct {
@@ -36,6 +37,13 @@ func buildCLISchema(version string) cliSchema {
 		Description: "TUI and CLI for listing git repos and managing worktrees",
 		Version:     version,
 		Default:     "launch the interactive TUI",
+		ExitCodes: map[string]string{
+			"0": "success",
+			"1": "usage or IO error (also branch_exists / branch_checked_out_elsewhere)",
+			"3": "repo or worktree not found",
+			"4": "blocked: worktree is dirty (re-run with --force to override)",
+			"5": "blocked: worktree is locked",
+		},
 		Subcommands: []subCmd{
 			{
 				Name:  "describe",

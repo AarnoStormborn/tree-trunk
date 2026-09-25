@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -21,10 +22,24 @@ import (
 // Every op returns a JSON envelope: { "ok": bool, ... } with structured
 // errors { "ok": false, "error": { "code", "message", "repo", "branch" } }.
 
+// wtUsage is printed by `tree-trunk wt --help` and by usage errors.
+const wtUsage = `tree-trunk wt <op> [repo] [branch] [flags]
+
+Ops:
+  list                     all worktrees across repos (read-only)
+  create <repo> <branch>   create a worktree [--from base] [--path dir] [--force]
+  delete <repo> <branch>   remove a worktree (refuses dirty unless --force)
+  lock   <repo> <branch>   lock a worktree [--reason S]
+  unlock <repo> <branch>   unlock a worktree
+  prune  [repo]            prune prunable worktrees [--dry-run]
+
+Flags may appear before or after positionals.
+Exit codes: 0 ok, 1 usage/IO, 3 not found, 4 dirty-blocked, 5 locked.`
+
 // wtResult is the JSON envelope for a successful op.
 type wtResult struct {
 	Ok     bool     `json:"ok"`
-	Op     string   `json:"op"`
+	Op     string   `json:"op,omitempty"`
 	Repo   string   `json:"repo,omitempty"`
 	Branch string   `json:"branch,omitempty"`
 	Path   string   `json:"path,omitempty"`
@@ -86,6 +101,12 @@ func runWTCommand(args []string, version string) error {
 	op := args[0]
 	rest := args[1:]
 
+	// `tree-trunk wt --help` / `wt help` (help is a success, not an error).
+	if op == "--help" || op == "-h" || op == "help" {
+		fmt.Println(wtUsage)
+		return nil
+	}
+
 	// Interleaved flag parsing: accept --flags before or after positionals
 	// (Go's flag stops at the first positional; agents shouldn't care about
 	// ordering). We parse flags manually, leaving positionals untouched.
@@ -118,6 +139,9 @@ func runWTCommand(args []string, version string) error {
 			case a == "--no-scan":
 				noScan = true
 				i++
+			case a == "--help" || a == "-h":
+				fmt.Println(wtUsage)
+				return nil
 			case a == "--repo" && i+1 < len(rest):
 				repos = append(repos, rest[i+1])
 				i += 2
@@ -299,6 +323,12 @@ func wtDelete(ctx context.Context, cfg *config.Config, runner *git.ExecRunner, r
 	if wt == nil {
 		return emitErr(&wtError{Code: "worktree_not_found", Message: "no worktree matches branch/path", Repo: repo.Name, Branch: branch})
 	}
+	// Deterministic guard ahead of git: a locked tree cannot be removed even
+	// with --force (git needs `remove -f -f`), and the parsed worktree list is
+	// authoritative, so don't rely on stderr phrasing alone.
+	if wt.Locked {
+		return emitErr(&wtError{Code: "worktree_locked", Message: "worktree is locked: " + wt.Path, Repo: repo.Name, Branch: wt.Branch, Path: wt.Path})
+	}
 	err = git.RemoveWorktree(ctx, runner, repo.Path, wt.Path, force)
 	if err != nil {
 		return emitErr(classifyWTError(err, repo.Name, wt.Branch, wt.Path))
@@ -400,11 +430,30 @@ func classifyWTError(err error, repo, branch, path string) *wtError {
 	return &wtError{Code: code, Message: msg, Repo: repo, Branch: branch, Path: path}
 }
 
-// emitErr prints a structured error JSON envelope (exit 1).
+// exitCodeFor maps a structured agent error to the documented process exit
+// code (docs/design/10-agent-cli.md §Exit codes): 0 ok, 1 usage/IO,
+// 3 not-found, 4 dirty-blocked, 5 locked. Codes without a documented slot
+// (branch_exists, branch_checked_out_elsewhere, git_error, usage) are 1.
+func exitCodeFor(e *wtError) int {
+	switch e.Code {
+	case "repo_not_found", "worktree_not_found":
+		return 3
+	case "worktree_dirty":
+		return 4
+	case "worktree_locked":
+		return 5
+	default:
+		return 1
+	}
+}
+
+// emitErr prints a structured error JSON envelope and returns an error that
+// carries the contract exit code. The envelope is the only output: main
+// detects the exitCoder and prints nothing more to stderr.
 func emitErr(e *wtError) error {
 	out, _ := json.MarshalIndent(wtResult{Ok: false, Error: e}, "", "  ")
 	fmt.Println(string(out))
-	return nil
+	return &codedError{code: exitCodeFor(e), err: errors.New(e.Code + ": " + e.Message)}
 }
 
 // emitJSON prints the envelope if jsonOut, else a compact human line.
