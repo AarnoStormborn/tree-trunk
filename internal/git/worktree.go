@@ -171,7 +171,13 @@ func RemoveWorktree(ctx context.Context, r Runner, dir, path string, force bool)
 	}
 	stderr := err.Error()
 	switch {
-	case strings.Contains(stderr, "cannot be locked") || strings.Contains(stderr, "is locked"):
+	// `git worktree remove` on a locked tree refuses with
+	// "cannot remove a locked working tree; use 'remove -f -f' …" (git ≥ 2.30).
+	// Older/other phrasings are matched too; keep these as exact phrases so a
+	// path containing "locked" can never be misclassified.
+	case strings.Contains(stderr, "cannot remove a locked working tree"),
+		strings.Contains(stderr, "cannot be locked"),
+		strings.Contains(stderr, "is locked"):
 		return &WorktreeLockedError{Path: path}
 	case strings.Contains(stderr, "contains modified or untracked files"):
 		return &WorktreeDirtyError{Path: path}
