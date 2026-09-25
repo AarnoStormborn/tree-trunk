@@ -75,17 +75,17 @@ measurement deferred to the M5 performance pass.
 **Goal:** create / delete / lock / unlock worktrees with the two-step safety
 flows.
 
-- [ ] `internal/git/worktree.go` + `worktree_parse.go` (porcelain `-z` parser)
-- [ ] `CheckedOutByOtherWorktree` guard; create flow (existing vs new branch,
+- [x] `internal/git/worktree.go` + `worktree_parse.go` (porcelain `-z` parser)
+- [x] `CheckedOutByOtherWorktree` guard; create flow (existing vs new branch,
   `--guess-remote` for remote-only branches — review m6; base ref, D8 path
   template + slug spec)
-- [ ] Two-step remove (safe → force confirm); lock/unlock; prune with **UI
+- [x] Two-step remove (safe → force confirm); lock/unlock; prune with **UI
   binding** (review M6: dry-run preview + confirm)
-- [ ] UI: worktrees tab (04 §5.4), create form (04 §4), repo-row expandable
+- [x] UI: worktrees tab (04 §5.4), create form (04 §4), repo-row expandable
   worktree children (+ dirty icons, review M5), `n`/`d`/`o`/`u`/`L` bindings
   per final registry (08-reviewer-drafts.md Draft B)
-- [ ] Error codes → dialogs/toasts (03 §6)
-- [ ] **Tests:** worktree parser fixtures; create/remove/lock integration against sandbox repos; the two-step force flow end-to-end; branch-checked-out-elsewhere guard
+- [x] Error codes → dialogs/toasts (03 §6)
+- [x] **Tests:** worktree parser fixtures; create/remove/lock integration against sandbox repos; the two-step force flow end-to-end; branch-checked-out-elsewhere guard — including the locked-remove guard (`WorktreeLockedError`, exercised in `TestWorktreeLifecycle`)
 
 **Exit (met):** full create/delete cycle on a real repo with confirmations;
 force path requires explicit confirm; branches never deleted; dirty worktrees
@@ -115,7 +115,7 @@ branch (product requirement #4).
   the commit as base
 - [x] **Q6 resolved**: diff modes are toggles (`m` cycle), per design option
   (a); **scope held to stat/raw** (no hunk folding)
-- [ ] **Tests:** log parser fixtures (newlines in subjects!), streaming cancellation, diff modes integration
+- [x] **Tests:** log parser fixtures (newlines in subjects!), stale-result drop by repo ID, diff modes integration (`internal/git/log_diff_test.go`, `internal/ui/logdiff_test.go`)
 
 **Exit (met):** log/diff render fast for typical repos with a 2 MiB cap;
 stale diffs are dropped when switching repos; root-commit diffs work; the
@@ -231,3 +231,11 @@ assertion).
 | M4 polish | M |
 | M5 hardening/release | M |
 | **Total** | **~L (≈ 4–8 focused weeks)** |
+
+## 7. Agent-facing CLI (added 2026-08-24, after M5)
+
+The read/write API for coding agents is specified in
+[`10-agent-cli.md`](10-agent-cli.md) and shipped: `query` (PR #11),
+`describe` + man page + `AGENTS.md` (PR #12), and
+`wt list/create/delete/lock/unlock/prune` with structured errors and the
+exit-code contract (PR #13).

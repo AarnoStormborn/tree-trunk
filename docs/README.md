@@ -4,9 +4,13 @@
 machine and managing their **git worktrees** — create, delete, and inspect
 (log, diff, status) against each repo's main active branch.
 
-> **Status: PLANNING.** This session produced research + design docs only.
-> No implementation has started. Next step: M0 of
-> [`design/05-implementation-plan.md`](design/05-implementation-plan.md).
+> **Status: IMPLEMENTED (pre-1.0).** M0–M5 of
+> [`design/05-implementation-plan.md`](design/05-implementation-plan.md) are
+> complete: the TUI, the agent read-API (`tree-trunk query`), the agent
+> write-API (`tree-trunk wt`), `describe`, shell completion, CI and the
+> goreleaser release flow all exist and are tested. No release tag has been
+> cut yet; the next step is v0.1.0 (see `release-checklist` in the recap
+> notes) — the research docs below are kept as the historical record.
 
 ## Document map
 
@@ -27,6 +31,7 @@ machine and managing their **git worktrees** — create, delete, and inspect
 | [`design/07-design-review.md`](design/07-design-review.md) | Independent design review: 1 blocker, 10 majors, 13 minors — all resolved (§9) |
 | [`design/08-reviewer-drafts.md`](design/08-reviewer-drafts.md) | Reviewer drafts: config schema + keybinding reallocation (merged into 09 / 04) |
 | [`design/09-config.md`](design/09-config.md) | Full `config.toml` schema, precedence rules, default ignore list |
+| [`design/10-agent-cli.md`](design/10-agent-cli.md) | Agent-facing CLI contract: `query` read-API, `wt` mutating API, structured errors, exit codes |
 
 ## Product brief (for reference)
 

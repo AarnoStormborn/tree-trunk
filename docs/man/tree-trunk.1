@@ -8,6 +8,10 @@ tree-trunk \- TUI and CLI for listing git repos and managing worktrees
 .B tree-trunk query
 [\fIflags\fR]
 .br
+.B tree-trunk wt
+{\fIlist\fR|\fIcreate\fR|\fIdelete\fR|\fIlock\fR|\fIunlock\fR|\fIprune\fR}
+[\fIrepo\fR] [\fIbranch\fR] [\fIflags\fR]
+.br
 .B tree-trunk describe
 .br
 .B tree-trunk completion
@@ -68,6 +72,44 @@ do not scan; use \-\-repo only.
 Each repo has a stable \fIid\fR (the canonical git dir), its worktrees
 (path, branch, is_main, locked, prunable, dirty), and status (branch, ahead,
 behind, per-file entries with a porcelain \fIcode\fR).
+.SS wt
+Mutating worktree API for agents and scripts. Every op prints a JSON
+envelope: \fB{"ok": true, ...}\fR on success, or
+\fB{"ok": false, "error": {"code", "message", "repo", "branch", "path"}}\fR
+on failure. Flags may appear before or after positionals.
+.TP
+.B list
+all worktrees across repos (read-only).
+.TP
+.B create \fIrepo branch\fR
+create a worktree. Default path \fI~/.worktrees/<repo>/<slug>\fR.
+.B \-\-from \fIref\fR
+sets the base ref (default HEAD),
+.B \-\-path \fIdir\fR
+the destination, and
+.B \-\-force
+bypasses the guards.
+.TP
+.B delete \fIrepo branch\fR
+remove a worktree. Refuses when it is dirty unless \fB\-\-force\fR is given,
+and always refuses a locked worktree (unlock first). The branch is never
+deleted.
+.TP
+.B lock \fIrepo branch\fR [\-\-reason \fItext\fR]
+lock a worktree;
+.B unlock \fIrepo branch\fR
+reverses it.
+.TP
+.B prune [\fIrepo\fR]
+prune prunable worktrees (every repo when no repo is given).
+.B \-\-dry-run
+previews without executing.
+.PP
+Structured error codes: \fIrepo_not_found\fR, \fIworktree_not_found\fR,
+\fIworktree_dirty\fR, \fIworktree_locked\fR,
+\fIbranch_checked_out_elsewhere\fR, \fIbranch_exists\fR, \fIgit_error\fR.
+.B \-\-json
+is the default; \fB\-\-no\-json\fR emits compact JSON.
 .SS describe
 Print a self-describing JSON schema of this CLI: the subcommands, their
 flags, and the output documents. Useful for agents that cannot parse prose
@@ -85,8 +127,25 @@ optional configuration (scan roots, discovery options, themes).
 .I ~/.local/state/tree-trunk/state.json
 recently-opened repos.
 .SH EXIT STATUS
-0 on success; non-zero on error. (A richer exit-code contract for agents is
-planned.)
+.TP
+.B 0
+success, including \fB\-\-help\fR.
+.TP
+.B 1
+usage or I/O error; also \fIbranch_exists\fR,
+\fIbranch_checked_out_elsewhere\fR and \fIgit_error\fR.
+.TP
+.B 3
+the repo or worktree was not found.
+.TP
+.B 4
+blocked: the worktree has modified or untracked files (re-run with
+\fB\-\-force\fR to override).
+.TP
+.B 5
+blocked: the worktree is locked.
+.PP
+The \fBquery\fR, \fBdescribe\fR and \fBcompletion\fR subcommands use 0/1 only.
 .SH SEE ALSO
 .BR git (1),
 .BR git-worktree (1)

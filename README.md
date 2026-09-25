@@ -83,7 +83,14 @@ schema, filters, and the upcoming mutating `wt` commands.
 `tree-trunk wt` is the mutating counterpart: it reuses the same guarded git
 engine as the TUI (blocks on checked-out-elsewhere / dirty / locked), returns
 structured JSON errors agents can act on, and accepts flags before or after
-positionals.
+positionals. `tree-trunk wt --help` lists the ops.
+
+Exit codes are part of the contract, so an agent can branch on process status
+alone: `0` success, `1` usage/IO (also `branch_exists`,
+`branch_checked_out_elsewhere`, `git_error`), `3` repo/worktree not found,
+`4` blocked by a dirty worktree (`--force` overrides), `5` blocked by a locked
+worktree. Failures print `{"ok":false,"error":{...}}` on stdout and nothing
+on stderr.
 
 For programmatic discovery, `tree-trunk describe` prints the CLI's
 self-describing schema (subcommands, flags, output documents) as JSON — an
