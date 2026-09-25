@@ -152,6 +152,17 @@ func TestWorktreeLifecycle(t *testing.T) {
 	if !wts[1].Locked || wts[1].LockReason != "portable drive" {
 		t.Fatalf("locked worktree = %+v", wts[1])
 	}
+	// Guard: removing a locked worktree must yield the typed error (agents map
+	// it to exit code 5); --force is not enough, the tree must be unlocked.
+	err = RemoveWorktree(ctx, runner, main, wtPath2, false)
+	var wl *WorktreeLockedError
+	if !errors.As(err, &wl) {
+		t.Fatalf("expected WorktreeLockedError, got %v", err)
+	}
+	err = RemoveWorktree(ctx, runner, main, wtPath2, true)
+	if !errors.As(err, &wl) {
+		t.Fatalf("expected WorktreeLockedError with force, got %v", err)
+	}
 	if err := UnlockWorktree(ctx, runner, main, wtPath2); err != nil {
 		t.Fatal(err)
 	}

@@ -9,11 +9,12 @@ import (
 // Agents that cannot parse prose --help can introspect this to discover the
 // subcommmands, their flags, and the read-API output schema.
 type cliSchema struct {
-	Command     string   `json:"command"`
-	Description string   `json:"description"`
-	Version     string   `json:"version"`
-	Default     string   `json:"default"` // what `tree-trunk` with no args does
-	Subcommands []subCmd `json:"subcommands"`
+	Command     string            `json:"command"`
+	Description string            `json:"description"`
+	Version     string            `json:"version"`
+	Default     string            `json:"default"` // what `tree-trunk` with no args does
+	ExitCodes   map[string]string `json:"exit_codes"`
+	Subcommands []subCmd          `json:"subcommands"`
 }
 
 type subCmd struct {
@@ -36,11 +37,34 @@ func buildCLISchema(version string) cliSchema {
 		Description: "TUI and CLI for listing git repos and managing worktrees",
 		Version:     version,
 		Default:     "launch the interactive TUI",
+		ExitCodes: map[string]string{
+			"0": "success",
+			"1": "usage or IO error (also branch_exists / branch_checked_out_elsewhere)",
+			"3": "repo or worktree not found",
+			"4": "blocked: worktree is dirty (re-run with --force to override)",
+			"5": "blocked: worktree is locked",
+		},
 		Subcommands: []subCmd{
 			{
 				Name:  "describe",
 				Usage: "tree-trunk describe",
 				Desc:  "Emit the machine-readable CLI schema (subcommands, flags, output docs).",
+			},
+			{
+				Name:  "wt",
+				Usage: "tree-trunk wt <list|create|delete|lock|unlock|prune> [repo] [branch] [flags]",
+				Desc:  "Manage git worktrees (mutating agent API): list, create, delete, lock, unlock, prune. Reuses guarded git ops; structured errors. Flags may appear before or after positionals.",
+				Flags: []cliFlag{
+					{Name: "json", Kind: "bool", Desc: "emit JSON (default)"},
+					{Name: "force", Kind: "bool", Desc: "delete: bypass dirty check; create: bypass guards"},
+					{Name: "dry-run", Kind: "bool", Desc: "prune: preview without executing"},
+					{Name: "from", Kind: "string", Desc: "create: base commit/branch (default HEAD)"},
+					{Name: "path", Kind: "string", Desc: "create: destination (default ~/.worktrees/<repo>/<slug>)"},
+					{Name: "reason", Kind: "string", Desc: "lock: reason"},
+					{Name: "repo", Kind: "repeatable", Desc: "explicit repo path"},
+					{Name: "scan-root", Kind: "repeatable", Desc: "scan root"},
+					{Name: "no-scan", Kind: "bool", Desc: "do not scan the filesystem"},
+				},
 			},
 			{
 				Name:  "query",

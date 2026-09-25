@@ -1,6 +1,7 @@
 # Build artifacts
 /tree-trunk
 /dist/
+/.man/
 *.exe
 
 # Test artifacts

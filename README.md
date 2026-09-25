@@ -38,6 +38,10 @@ tree-trunk --list                   # just print your repos, one path per line
 tree-trunk --repo ~/code/app        # open with a specific project (repeatable)
 tree-trunk --scan-root ~/src        # scan a specific folder instead of your home dir
 tree-trunk query --json             # machine-readable repo/worktree/status state
+tree-trunk wt list --json          # all worktrees across repos
+tree-trunk wt create MYREPO feat/x # create a worktree (agent-manageable)
+tree-trunk wt delete MYREPO feat/x # delete it (guarded; --force to bypass)
+tree-trunk wt prune MYREPO         # clean up prunable worktrees
 tree-trunk describe                # introspectable CLI schema (for agents)
 tree-trunk completion zsh           # shell tab-completion
 ```
@@ -75,6 +79,18 @@ tree-trunk query --repo ~/code/app --no-scan --json  # a specific repo
 Each repo has a stable `id` (the canonical git dir), its worktrees, branch,
 ahead/behind, and per-file status. See `docs/design/10-agent-cli.md` for the
 schema, filters, and the upcoming mutating `wt` commands.
+
+`tree-trunk wt` is the mutating counterpart: it reuses the same guarded git
+engine as the TUI (blocks on checked-out-elsewhere / dirty / locked), returns
+structured JSON errors agents can act on, and accepts flags before or after
+positionals. `tree-trunk wt --help` lists the ops.
+
+Exit codes are part of the contract, so an agent can branch on process status
+alone: `0` success, `1` usage/IO (also `branch_exists`,
+`branch_checked_out_elsewhere`, `git_error`), `3` repo/worktree not found,
+`4` blocked by a dirty worktree (`--force` overrides), `5` blocked by a locked
+worktree. Failures print `{"ok":false,"error":{...}}` on stdout and nothing
+on stderr.
 
 For programmatic discovery, `tree-trunk describe` prints the CLI's
 self-describing schema (subcommands, flags, output documents) as JSON — an
