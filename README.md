@@ -78,7 +78,7 @@ tree-trunk query --repo ~/code/app --no-scan --json  # a specific repo
 
 Each repo has a stable `id` (the canonical git dir), its worktrees, branch,
 ahead/behind, and per-file status. See `docs/design/10-agent-cli.md` for the
-schema, filters, and the upcoming mutating `wt` commands.
+schema and filters.
 
 `tree-trunk wt` is the mutating counterpart: it reuses the same guarded git
 engine as the TUI (blocks on checked-out-elsewhere / dirty / locked), returns
